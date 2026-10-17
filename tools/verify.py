@@ -104,16 +104,21 @@ class Run:
         self.process = subprocess.Popen(cmd, cwd=self.source, env=self.env, stdout=self.log, stderr=subprocess.STDOUT, shell=False)
         self.event(kind='start', argv=cmd, pid=self.process.pid, port=self.port, stateDir=str(self.state))
         deadline = time.monotonic() + 10
+        last_probe = {'detail': 'No readiness probe completed'}
         while time.monotonic() < deadline:
             if self.process.poll() is not None:
-                raise AssertionError('App exited before readiness')
+                self.event(kind='readinessFailure', exitCode=self.process.returncode, **last_probe)
+                raise AssertionError(f'App exited before readiness; exitCode={self.process.returncode}; lastProbe={json.dumps(last_probe)}; processLog={self.log.name}')
             try:
-                if self.http('GET', '/sessions')[0] == 200:
+                status, _ = self.http('GET', '/sessions')
+                last_probe = {'lastHttpStatus': status}
+                if status == 200:
                     return
-            except (OSError, urllib.error.URLError):
-                pass
+            except (OSError, urllib.error.URLError) as exc:
+                last_probe = {'lastException': f'{type(exc).__name__}: {exc}'}
             time.sleep(.1)
-        raise AssertionError('Readiness timed out')
+        self.event(kind='readinessFailure', **last_probe)
+        raise AssertionError(f'Readiness timed out; lastProbe={json.dumps(last_probe)}; processLog={self.log.name}')
 
     def stop(self):
         if self.process:

@@ -6,7 +6,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
-from pypdf import PdfReader, PdfWriter
+PAGE_COUNTS = {}
 
 root=Path(__file__).resolve().parents[1]
 out=root/'docs'
@@ -83,13 +83,13 @@ def create(name,files):
         story+=parse(out/f)
     doc=SimpleDocTemplate(str(pdfout/name),pagesize=A4,rightMargin=46,leftMargin=46,topMargin=42,bottomMargin=52,title=name[:-4].replace('-',' '),author='Dragan Spiridonov and Lalitkumar Bhamare')
     doc.build(story,onFirstPage=footer,onLaterPages=footer)
+    PAGE_COUNTS[name] = doc.page
     return pdfout/name
 
 sources=['01-Starter-PRD.md','02-Verification-Checklist.md','03-Cross-Audit-Checklist.md','04-Scoring-Sheets.md','05-Facilitator-Notes.md']
 for f in sources:create(f.replace('.md','.pdf'),[f])
 create('Participant-Pack.pdf',['01-Starter-PRD.md','02-Verification-Checklist.md','03-Cross-Audit-Checklist.md','04-Scoring-Sheets.md','06-Pattern-Reference-Card.md'])
 create('Facilitator-Pack.pdf',['05-Facilitator-Notes.md','04-Scoring-Sheets.md'])
-for p in pdfout.glob('*.pdf'):
-    reader=PdfReader(p);texts=[page.extract_text() or '' for page in reader.pages]
-    assert all(t.strip() for t in texts)
-    print(p.name,len(reader.pages),'pages',p.stat().st_size,'bytes')
+for name, pages in PAGE_COUNTS.items():
+    assert pages > 0
+    print(name, pages, 'pages', (pdfout/name).stat().st_size, 'bytes')

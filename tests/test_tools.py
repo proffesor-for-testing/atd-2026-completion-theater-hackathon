@@ -7,7 +7,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+import urllib.error
 import zipfile
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
@@ -119,9 +120,12 @@ class VerificationNegativeControls(unittest.TestCase):
         self.adapter=self.root/'adapter.json'
         self.config={'start':['{python}','app.py'],'reset':['{python}','-c','pass']}
         self.adapter.write_text(json.dumps(self.config))
+    def diagnostics(self, report, evidence):
+        logs='\n'.join(f'{path.name}:\n{path.read_text(errors="replace")}' for path in sorted(evidence.glob('process-*.log')))
+        return json.dumps(report['results'],indent=2)+'\n'+logs
     def test_incomplete_fixture_never_succeeds_and_keeps_raw_receipts(self):
         report=verify.execute(self.source,self.adapter,self.root/'receipts',batches=1)
-        self.assertEqual(report['results']['AC02']['apiStatus'],'PASS')
+        self.assertEqual(report['results']['AC02']['apiStatus'],'PASS',self.diagnostics(report,self.root/'receipts'))
         self.assertEqual(report['AC01'],'NOT RUN')
         for name in ('AC03','AC04','AC05','AC06','AC07','AC08'):
             self.assertEqual(report['results'][name]['apiStatus'],'FAIL',name)
@@ -179,7 +183,7 @@ class VerificationNegativeControls(unittest.TestCase):
         with patch.dict(os.environ,{'ATD_TEST_PRIVATE_API_TOKEN':'fictional-negative-control'}):
             report=verify.execute(cold,self.adapter,self.root/'cold-receipts',1)
         self.assertEqual(report['sourceIdBefore'],original['sourceId'])
-        self.assertEqual(report['results']['AC02']['apiStatus'],'PASS')
+        self.assertEqual(report['results']['AC02']['apiStatus'],'PASS',self.diagnostics(report,self.root/'cold-receipts'))
         self.assertEqual(report['results']['AC03']['apiStatus'],'FAIL')
         self.assertTrue(report['sourceUnchanged'])
     def test_runtime_environment_allowlist_drops_secret(self):
@@ -188,5 +192,25 @@ class VerificationNegativeControls(unittest.TestCase):
         self.assertNotIn('ATD_TEST_PRIVATE_API_TOKEN',env)
         self.assertEqual(env['PATH'],'runtime-path');self.assertEqual(env['HOME'],'runtime-home')
         self.assertEqual(env['PORT'],'43210');self.assertEqual(env['DATA_DIR'],str(self.root/'new-state'))
+    def test_readiness_failure_records_last_network_error_or_http_status(self):
+        # Exercise a real readiness iteration without waiting ten wall-clock seconds.
+        for index,probe in enumerate((urllib.error.URLError('diagnostic connection refusal'),(503,{'error':'warming'}))):
+            evidence=self.root/f'diagnostic-{index}'; evidence.mkdir()
+            run=verify.Run(self.source,self.config,evidence)
+            run.scenario='AC02'; run.port=12345; run.state=self.root/'unused-state'; run.env={}
+            child=Mock(pid=123); child.poll.return_value=None
+            try:
+                with patch.object(verify.subprocess,'Popen',return_value=child), patch.object(verify.time,'monotonic',side_effect=[0,0,11]), patch.object(verify.time,'sleep'), patch.object(run,'http',side_effect=probe if isinstance(probe,Exception) else None,return_value=probe):
+                    with self.assertRaisesRegex(AssertionError,'Readiness timed out; lastProbe=') as raised:
+                        run.start()
+                receipt=next(r for r in run.receipts if r['kind']=='readinessFailure')
+                if index==0:
+                    self.assertIn('diagnostic connection refusal',receipt['lastException'])
+                    self.assertIn('diagnostic connection refusal',str(raised.exception))
+                else:
+                    self.assertEqual(receipt['lastHttpStatus'],503)
+                    self.assertIn('503',str(raised.exception))
+            finally:
+                if run.log: run.log.close()
 
 if __name__=='__main__': unittest.main()
