@@ -4,6 +4,7 @@ Implement the PRD endpoints and browser behavior during the hackathon.
 Run --reset explicitly before serving. Only this marked fixture store is reset.
 """
 import argparse
+from contextlib import closing
 import json
 import os
 from pathlib import Path
@@ -31,7 +32,7 @@ def reset_fixture():
         raise RuntimeError('Refusing to reset an unmarked database. Choose a new DATA_DIR.')
     DATA.mkdir(parents=True, exist_ok=True)
     marker.write_text(MARKER)
-    with sqlite3.connect(db) as connection:
+    with closing(sqlite3.connect(db)) as connection, connection:
         connection.executescript('''
             CREATE TABLE IF NOT EXISTS sessions (
               id TEXT PRIMARY KEY, title TEXT NOT NULL, capacity INTEGER NOT NULL);

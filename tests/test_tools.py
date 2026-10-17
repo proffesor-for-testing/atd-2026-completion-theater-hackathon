@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 import socket
+import sqlite3
 from pathlib import Path
 import subprocess
 import sys
@@ -315,5 +316,32 @@ class ShippedStarterTransportTests(unittest.TestCase):
                     receipts.append({'kind':'stop','pid':process.pid,'exitCode':process.returncode})
                 # Keep receipts explicit in test output without claiming app acceptance.
                 print(json.dumps({'kind':'shippedStarterTransportReceipts','appAcceptance':'NOT RUN','receipts':receipts}),flush=True)
+
+class ResourceLifecycleTests(unittest.TestCase):
+    def test_preflight_closes_its_real_sqlite_connection(self):
+        real_connect=sqlite3.connect; opened=[]
+        def track(*args,**kwargs):
+            connection=real_connect(*args,**kwargs);opened.append(connection);return connection
+        with patch.object(preflight.sqlite3,'connect',side_effect=track):
+            self.assertTrue(preflight.check()['sqliteAvailable'])
+        self.assertEqual(len(opened),1)
+        with self.assertRaises(sqlite3.ProgrammingError):opened[0].execute('select 1')
+
+    def test_fixture_reset_closes_connection_on_success_and_error(self):
+        path=Path(__file__).resolve().parents[1]/'starter-python'/'app.py'
+        spec=importlib.util.spec_from_file_location('starter_connection_test',path)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        real_connect=sqlite3.connect;opened=[]
+        def track(*args,**kwargs):
+            connection=real_connect(*args,**kwargs);opened.append(connection);return connection
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);module.DATA=root/'fixture'
+            with patch.object(module.sqlite3,'connect',side_effect=track):
+                module.reset_fixture()
+                module.BASE=root;(root/'sessions.json').write_text('{invalid')
+                with self.assertRaises(json.JSONDecodeError):module.reset_fixture()
+            self.assertEqual(len(opened),2)
+            for connection in opened:
+                with self.assertRaises(sqlite3.ProgrammingError):connection.execute('select 1')
 
 if __name__=='__main__': unittest.main()

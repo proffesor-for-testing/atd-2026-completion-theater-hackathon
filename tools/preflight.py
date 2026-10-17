@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check helper runtime and loopback availability; does not qualify the app."""
 import argparse
+from contextlib import closing
 import json
 import socket
 import sqlite3
@@ -11,7 +12,7 @@ def check():
                'python311OrNewer': sys.version_info >= (3, 11),
                'sqliteVersion': sqlite3.sqlite_version, 'appStatus': 'NOT RUN'}
     try:
-        with sqlite3.connect(':memory:') as db:
+        with closing(sqlite3.connect(':memory:')) as db:
             results['sqliteAvailable'] = db.execute('select 1').fetchone() == (1,)
     except sqlite3.Error as exc:
         results['sqliteAvailable'] = False; results['sqliteError'] = str(exc)
