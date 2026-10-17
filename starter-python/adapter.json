@@ -1,0 +1,17 @@
+{
+  "start": ["{python}", "app.py"],
+  "reset": ["{python}", "app.py", "--reset"],
+  "fields": {
+    "sessions": "sessions",
+    "sessionRecordId": "id",
+    "sessionId": "sessionId",
+    "reservationId": "id",
+    "attendeeAlias": "attendeeAlias",
+    "requestKey": "requestKey",
+    "status": "status",
+    "capacity": "capacity",
+    "activeCount": "activeCount",
+    "remainingSeats": "remainingSeats",
+    "reservation": ""
+  }
+}
