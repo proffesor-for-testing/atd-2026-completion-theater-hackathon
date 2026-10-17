@@ -67,6 +67,8 @@ def read_archive(archive):
             if info.file_size > 50_000_000 or sum(x.file_size for x in z.infolist()) > 200_000_000:
                 raise ValueError('Snapshot exceeds size bound')
             files[name] = z.read(info)
+        if MANIFEST not in files:
+            raise ValueError('Missing snapshot manifest')
         manifest = json.loads(files.pop(MANIFEST))
         source_id, rows = identity(files)
         if not files or manifest != {'sourceId': source_id, 'files': rows}:

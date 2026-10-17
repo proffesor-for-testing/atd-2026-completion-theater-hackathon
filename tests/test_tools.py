@@ -62,6 +62,9 @@ class SnapshotTests(unittest.TestCase):
         with zipfile.ZipFile(self.archive) as src, zipfile.ZipFile(tamper,'w') as dst:
             for name in src.namelist(): dst.writestr(name,b'changed' if name=='app.py' else src.read(name))
         with self.assertRaisesRegex(ValueError,'mismatch'): snapshot.check(tamper)
+    def test_refuses_missing_manifest(self):
+        with zipfile.ZipFile(self.archive,'w') as z: z.writestr('app.py','print("no manifest")')
+        with self.assertRaisesRegex(ValueError,'Missing snapshot manifest'): snapshot.check(self.archive)
 
 class ScoreTests(unittest.TestCase):
     def setUp(self): self.data=json.loads((Path(score.__file__).parent/'example-score.json').read_text())
@@ -156,16 +159,23 @@ class VerificationNegativeControls(unittest.TestCase):
                 self.assertFalse(evidence.exists())
         verify.validate_launch_commands({'start':[sys.executable,'app.py'],'reset':[sys.executable,'-c','pass']},self.source)
     def test_rejects_source_runtime_hidden_in_path(self):
-        folder=self.source/'bin';folder.mkdir(); runtime=folder/'fake-runtime'
+        runtime_name='fake-runtime.exe' if os.name=='nt' else 'fake-runtime'
+        folder=self.source/'bin';folder.mkdir(); runtime=folder/runtime_name
         runtime.write_text('#!/bin/sh\n');runtime.chmod(0o755)
         with patch.dict(os.environ,{'PATH':str(folder)+os.pathsep+os.environ.get('PATH','')}):
             with self.assertRaisesRegex(ValueError,'PATH resolves'):
-                verify.validate_launch_commands({'start':['fake-runtime','app.py'],'reset':[sys.executable,'-c','pass']},self.source)
+                verify.validate_launch_commands({'start':[runtime_name,'app.py'],'reset':[sys.executable,'-c','pass']},self.source)
     def test_interpreter_launch_survives_cold_copy_and_private_env_is_removed(self):
         script=self.source/'app.py'; script.chmod(0o755)
         archive=self.root/'source.zip'; original=snapshot.create(self.source,archive)
         cold=self.root/'cold';snapshot.extract(archive,cold)
-        self.assertEqual((cold/'app.py').stat().st_mode & 0o777,0o644)
+        if os.name=='nt':
+            # Windows chmod exposes the read-only attribute, not POSIX execute bits.
+            self.assertTrue(os.access(cold/'app.py',os.W_OK))
+            with zipfile.ZipFile(archive) as z:
+                self.assertEqual((z.getinfo('app.py').external_attr>>16)&0o777,0o644)
+        else:
+            self.assertEqual((cold/'app.py').stat().st_mode & 0o777,0o644)
         with patch.dict(os.environ,{'ATD_TEST_PRIVATE_API_TOKEN':'fictional-negative-control'}):
             report=verify.execute(cold,self.adapter,self.root/'cold-receipts',1)
         self.assertEqual(report['sourceIdBefore'],original['sourceId'])
