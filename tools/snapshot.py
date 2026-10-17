@@ -6,7 +6,7 @@ import json
 from pathlib import Path, PurePosixPath
 import zipfile
 
-EXCLUDED = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', 'evidence', 'runtime', 'data', '.pytest_cache', 'dist', 'build'}
+EXCLUDED = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', 'evidence', 'runtime', 'data', '.state', '.pytest_cache', 'dist', 'build'}
 MANIFEST = 'SNAPSHOT-MANIFEST.json'
 
 def excluded(path):

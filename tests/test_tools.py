@@ -1,14 +1,18 @@
 """Helper tests. The HTTP fixture is deliberately incomplete, not a solution."""
 import copy
+import importlib.util
 import json
 import os
+import socket
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import Mock, patch
 import urllib.error
+import urllib.request
 import zipfile
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
@@ -27,7 +31,7 @@ class SnapshotTests(unittest.TestCase):
     def test_exclusions_deterministic_identity_and_safe_extract(self):
         for name in ('.env','.env.production','nagual.db','app.sqlite3','trace.log','foo.db-wal'):
             (self.source/name).write_text('private')
-        for name in ('.git','node_modules','evidence','data'):
+        for name in ('.git','node_modules','evidence','data','.state'):
             folder=self.source/name; folder.mkdir(); (folder/'secret.txt').write_text('private')
         (self.source/'.env.example').write_text('PORT=3000')
         first=snapshot.create(self.source,self.archive)
@@ -103,13 +107,24 @@ class ScoreTests(unittest.TestCase):
 
 INCOMPLETE = '''import json, os
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import TCPServer
 assert 'ATD_TEST_PRIVATE_API_TOKEN' not in os.environ, 'Private parent environment leaked'
+class LocalOnlyHTTPServer(HTTPServer):
+ def server_bind(self):
+  # HTTPServer's default reverse-DNS lookup is unnecessary for this fixture.
+  TCPServer.server_bind(self)
+  self.server_name = 'localhost'
+  self.server_port = self.server_address[1]
 class Handler(BaseHTTPRequestHandler):
  def do_GET(self):
   self.send_response(200); self.end_headers(); self.wfile.write(json.dumps({"sessions":[{"id":"CT-101","capacity":2,"activeCount":0,"remainingSeats":2},{"id":"CT-102","capacity":3,"activeCount":0,"remainingSeats":3}]}).encode())
  def do_POST(self):
   self.send_response(200); self.end_headers(); self.wfile.write(b'{"error":"pretend success"}')
-if __name__=="__main__": HTTPServer(("127.0.0.1",int(os.environ["PORT"])),Handler).serve_forever()
+if __name__=="__main__":
+ print('fixture: before loopback HTTPServer constructor',flush=True)
+ server=LocalOnlyHTTPServer(("127.0.0.1",int(os.environ["PORT"])),Handler)
+ print('fixture: after loopback HTTPServer constructor; entering serve_forever',flush=True)
+ server.serve_forever()
 '''
 
 class VerificationNegativeControls(unittest.TestCase):
@@ -152,6 +167,26 @@ class VerificationNegativeControls(unittest.TestCase):
         self.assertEqual(result['runtimePath'],sys.executable)
         self.assertTrue(result['sqliteAvailable'])
         self.assertTrue(result['loopbackAvailable'])
+    def test_local_fixture_constructor_never_invokes_reverse_dns(self):
+        namespace={'__name__':'incomplete_fixture_under_test'}
+        exec(INCOMPLETE,namespace)
+        with patch.object(socket,'getfqdn',side_effect=AssertionError('Reverse DNS must not be called')):
+            server=namespace['LocalOnlyHTTPServer'](('127.0.0.1',0),namespace['Handler'])
+            try:
+                self.assertEqual(server.server_name,'localhost')
+                self.assertGreater(server.server_port,0)
+            finally: server.server_close()
+    def test_bounded_reverse_dns_environment_diagnostic(self):
+        # Diagnostic only: DNS behavior is not an application acceptance criterion.
+        # A subprocess bounds a potentially stalled system reverse-DNS call.
+        code='import socket; print("before-getfqdn",flush=True); socket.getfqdn("127.0.0.1"); print("after-getfqdn",flush=True)'
+        try:
+            result=subprocess.run([sys.executable,'-c',code],capture_output=True,text=True,timeout=2,env=verify.runtime_environment(0,self.root/'unused'))
+            diagnostic={'kind':'loopbackReverseDnsDiagnostic','status':'RETURNED' if result.returncode==0 else 'ERROR','exitCode':result.returncode,'stdout':result.stdout,'stderr':result.stderr}
+        except subprocess.TimeoutExpired as exc:
+            diagnostic={'kind':'loopbackReverseDnsDiagnostic','status':'TIMEOUT','boundSeconds':2,'stdout':(exc.stdout or b'').decode(errors='replace') if isinstance(exc.stdout,bytes) else exc.stdout}
+        print(json.dumps(diagnostic),flush=True)
+        self.assertIn(diagnostic['status'],('RETURNED','ERROR','TIMEOUT'))
     def test_rejects_direct_source_commands_before_evidence_or_launch(self):
         for first in ('./start.sh','path/run','.\\start.ps1',str(self.source/'app.py'),'app.py'):
             for name in ('start','reset'):
@@ -212,5 +247,73 @@ class VerificationNegativeControls(unittest.TestCase):
                     self.assertIn('503',str(raised.exception))
             finally:
                 if run.log: run.log.close()
+
+class ShippedStarterTransportTests(unittest.TestCase):
+    """Transport/setup qualification only; product criteria remain unimplemented."""
+    def test_actual_starter_constructor_never_invokes_reverse_dns(self):
+        path=Path(__file__).resolve().parents[1]/'starter-python'/'app.py'
+        spec=importlib.util.spec_from_file_location('shipped_starter_under_test',path)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        with patch.object(socket,'getfqdn',side_effect=AssertionError('Reverse DNS must not be called')):
+            server=module.LoopbackHTTPServer(('127.0.0.1',0),module.Handler)
+            try:
+                self.assertEqual(server.server_name,'localhost')
+                self.assertGreater(server.server_port,0)
+            finally: server.server_close()
+
+    def test_cold_shipped_starter_reset_health_placeholder_and_501(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary); app=root/'cold-app'; state=root/'new-state'
+            starter=Path(__file__).resolve().parents[1]/'starter-python'
+            snapshot.create(starter,root/'source.zip');snapshot.extract(root/'source.zip',app)
+            before=snapshot.tree_hash(app);receipts=[];process=None
+            with socket.socket() as sock:
+                sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
+            env=verify.runtime_environment(port,state)
+            logpath=root/'process.log'
+            try:
+                reset=subprocess.run([sys.executable,'app.py','--reset'],cwd=app,env=env,capture_output=True,text=True,timeout=10)
+                receipts.append({'kind':'reset','exitCode':reset.returncode,'stdout':reset.stdout,'stderr':reset.stderr})
+                self.assertEqual(reset.returncode,0,json.dumps(receipts))
+                self.assertTrue((state/'seats.db').is_file())
+                with logpath.open('wb') as output:
+                    process=subprocess.Popen([sys.executable,'app.py'],cwd=app,env=env,stdout=output,stderr=subprocess.STDOUT)
+                    receipts.append({'kind':'start','pid':process.pid,'port':port})
+                    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                    def get(path):
+                        try: response=opener.open(f'http://127.0.0.1:{port}{path}',timeout=.5)
+                        except urllib.error.HTTPError as exc: response=exc
+                        with response:
+                            result=(response.code,response.read().decode())
+                        receipts.append({'kind':'http','path':path,'status':result[0],'response':result[1]})
+                        return result
+                    deadline=time.monotonic()+5;last_error='No readiness attempt'
+                    while time.monotonic()<deadline:
+                        self.assertIsNone(process.poll(),'Starter exited: '+str(process.returncode))
+                        try:
+                            health=get('/health');break
+                        except (OSError,urllib.error.URLError) as exc:
+                            last_error=f'{type(exc).__name__}: {exc}';time.sleep(.05)
+                    else: self.fail('Starter health readiness timed out: '+last_error)
+                    self.assertEqual(health[0],200)
+                    self.assertEqual(json.loads(health[1]),{'status':'scaffold','implemented':False})
+                    code,body=get('/');self.assertEqual(code,200)
+                    self.assertIn('The reservation app is not implemented.',body)
+                    code,body=get('/sessions');self.assertEqual(code,501)
+                    self.assertEqual(json.loads(body)['error']['code'],'NOT_IMPLEMENTED')
+                self.assertEqual(snapshot.tree_hash(app),before)
+            except Exception:
+                print('SHIPPED STARTER TRANSPORT FAILURE\n'+json.dumps(receipts,indent=2)+'\n'+(logpath.read_text(errors='replace') if logpath.exists() else 'No process log'),flush=True)
+                raise
+            finally:
+                if process:
+                    if process.poll() is None:
+                        process.terminate()
+                        try: process.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            process.kill();process.wait(timeout=5)
+                    receipts.append({'kind':'stop','pid':process.pid,'exitCode':process.returncode})
+                # Keep receipts explicit in test output without claiming app acceptance.
+                print(json.dumps({'kind':'shippedStarterTransportReceipts','appAcceptance':'NOT RUN','receipts':receipts}),flush=True)
 
 if __name__=='__main__': unittest.main()

@@ -12,7 +12,7 @@ python3 tools/snapshot.py extract ../team-source.zip ../team-audit-copy
 
 Use your app directory instead of `starter-python`. Archives and extracted directories must be new. The archive must be outside the app source. Extraction never merges into an existing directory. No reset/deletion of a database occurs. `sourceId` hashes sorted relative filenames and file content hashes; `artifactSha256` hashes the archive bytes. Both are returned by all three operations. Record both when transferring a ZIP. Extracted source retains `sourceId`; file timestamps do not affect it.
 
-Excluded: `.git`, `.venv`, `venv`, `node_modules`, `__pycache__`, `.pytest_cache`, `evidence`, `runtime`, `data`, `dist`, `build`; `.env*` except `.env.example`; database, SQLite, log, bytecode and journal files. Keep actual source out of these paths. Exclusions are a convenience, **not a secret scanner**: inspect the archive before sharing. Source symlinks are refused. File modes are not preserved: invoke scripts with their interpreter and document any platform setup.
+Excluded: `.git`, `.venv`, `venv`, `node_modules`, `__pycache__`, `.pytest_cache`, `evidence`, `runtime`, `data`, `.state`, `dist`, `build`; `.env*` except `.env.example`; database, SQLite, log, bytecode and journal files. Keep actual source out of these paths. Exclusions are a convenience, **not a secret scanner**: inspect the archive before sharing. Source symlinks are refused. File modes are not preserved: invoke scripts with their interpreter and document any platform setup.
 
 ## API challenges
 

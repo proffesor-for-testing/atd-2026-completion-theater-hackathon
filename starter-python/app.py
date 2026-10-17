@@ -9,10 +9,19 @@ import os
 from pathlib import Path
 import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import TCPServer
 
 BASE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('DATA_DIR', str(BASE / '.state'))).resolve()
 MARKER = 'session-seat-desk-disposable-fixture-v1'
+
+
+class LoopbackHTTPServer(ThreadingHTTPServer):
+    """Local transport does not need HTTPServer's reverse-DNS lookup."""
+    def server_bind(self):
+        TCPServer.server_bind(self)
+        self.server_name = 'localhost'
+        self.server_port = self.server_address[1]
 
 
 def reset_fixture():
@@ -75,7 +84,7 @@ def main():
         return
     if not (DATA / 'seats.db').exists():
         parser.error('Run with --reset first, using the same DATA_DIR.')
-    server = ThreadingHTTPServer(('127.0.0.1', int(os.environ.get('PORT', '8765'))), Handler)
+    server = LoopbackHTTPServer(('127.0.0.1', int(os.environ.get('PORT', '8765'))), Handler)
     print('Scaffold only. Open http://127.0.0.1:%s' % server.server_port, flush=True)
     try:
         server.serve_forever()
