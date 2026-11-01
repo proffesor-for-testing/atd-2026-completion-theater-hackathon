@@ -1,6 +1,6 @@
 # Completion Theater: field card
 
-The HUSTEF five-pattern field guide, adapted for tonight's investigation.
+The Completion Theater five-pattern field guide, adapted for tonight's investigation.
 
 | Pattern | The claim | The check |
 | --- | --- | --- |
