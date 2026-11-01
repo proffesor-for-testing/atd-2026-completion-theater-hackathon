@@ -1,0 +1,4 @@
+interface:
+  display_name: "ATD Hackathon Judging"
+  short_description: "Evidence-based scoring for Dragan and Lalit"
+  default_prompt: "Use $score-hackathon to review this team's frozen submission and evidence, propose rubric scores, and prepare decisions for human adjudication."

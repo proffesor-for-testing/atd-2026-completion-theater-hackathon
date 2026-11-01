@@ -22,6 +22,8 @@ python3 tools/preflight.py
 
 Use the v1.1.0 release/tag for a stable copy. Read `CHANGELOG.md` for rehearsal fixes. Wi-Fi can fail: download the printable PDFs and your runtime/model dependencies beforehand. There is no package install for the supplied Python tools.
 
+Optional: [open this repository in GitHub Codespaces](docs/07-Codespaces-and-Judging.md) for Node/Python and current Claude, Codex, GitHub CLI, Ruflo and Agentic QE. Setup installs tools only; you authenticate and initialize your own agents. The same guide covers the judging skill for Dragan and Lalit.
+
 ## What is provided
 
 | Material | Where |
@@ -35,7 +37,7 @@ Use the v1.1.0 release/tag for a stable copy. Read `CHANGELOG.md` for rehearsal 
 | Optional, deliberately incomplete transport/storage scaffold | [Python starter](starter-python/) |
 | Source snapshot, API challenge and score validators | [Helper instructions](tools/README.md) |
 | Printable materials and opening/phase deck | [Downloads](materials/) |
-| What the technical rehearsal actually established | [Dry-run report](docs/dry-run-report.md) |
+| Codespaces setup and facilitator scoring skill | [Codespaces and judging](docs/07-Codespaces-and-Judging.md) |
 
 The starter is not a finished app. `/health` and the placeholder UI establish only that its server runs. Its test sentinel starts RED deliberately. Implement the product and meaningful tests during the build. Repository CI tests the helper tools, **not** the app your team creates. A green helper check is not a green product check.
 

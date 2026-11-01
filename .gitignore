@@ -16,3 +16,8 @@ node_modules/
 .DS_Store
 .agentic-qe/
 .claude-flow/
+.ruflo/
+.swarm/
+.claude/settings.local.json
+.codex/auth.json
+.codex/config.toml
