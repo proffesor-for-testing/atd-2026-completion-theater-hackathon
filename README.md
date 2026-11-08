@@ -8,19 +8,21 @@ Build a small app with your chosen AI coding tools, show what really works, then
 
 ## Before arriving
 
-1. Download this repository or clone it. No GitHub account or public fork is required to participate.
+1. One person per team needs a GitHub account. Fork this repository, then clone your team fork or open a Codespace in it. Build on `submission/<team-id>` and submit a pull request back to this repository. See the [submission workflow](docs/08-Submission-Workflow.md), including the facilitator-assisted offline fallback.
 2. Bring a laptop, charger, a coding agent you can already use, and available model access/credits or a working local model. The event does not supply model subscriptions.
 3. Have one familiar local runtime ready. The optional scaffold and helper tools use **Python 3.11+**, standard library only. Check the actual interpreter; some computers have multiple versions.
 4. Run `python3 tools/preflight.py`. On Windows, use `py -3 tools/preflight.py`. This checks runtime/SQLite/local ports, not app correctness. If it reports an older Python, select a Python 3.11+ executable explicitly and keep using that same executable for every command.
 5. Read the [starter PRD](docs/01-Starter-PRD.md), [API contract](docs/api-contract.md) and [scoring rubric](docs/04-Scoring-Sheets.md), all **rules version 1.1**.
 
 ```sh
-git clone https://github.com/proffesor-for-testing/atd-2026-completion-theater-hackathon.git
+git clone https://github.com/YOUR-ACCOUNT/atd-2026-completion-theater-hackathon.git
 cd atd-2026-completion-theater-hackathon
+git remote add upstream https://github.com/proffesor-for-testing/atd-2026-completion-theater-hackathon.git
+git switch -c submission/team-a
 python3 tools/preflight.py
 ```
 
-Use the v1.1.0 release/tag for a stable copy. Read `CHANGELOG.md` for rehearsal fixes. Wi-Fi can fail: download the printable PDFs and your runtime/model dependencies beforehand. There is no package install for the supplied Python tools.
+Start from the current organizer `main` so your fork includes the PR submission workflow; the older v1.1.0 release does not. The scoring rubric remains version 1.1. Read `CHANGELOG.md` for changes. Wi-Fi can fail: download the printable PDFs and your runtime/model dependencies beforehand. There is no package install for the supplied Python tools.
 
 Optional: [open this repository in GitHub Codespaces](docs/07-Codespaces-and-Judging.md) for Node/Python and current Claude, Codex, GitHub CLI, Ruflo and Agentic QE. Setup installs tools only; you authenticate and initialize your own agents. The same guide covers the judging skill for Dragan and Lalit.
 
@@ -33,6 +35,7 @@ Optional: [open this repository in GitHub Codespaces](docs/07-Codespaces-and-Jud
 | 40/30/20/10 rubric and judge forms | [Scoring sheets](docs/04-Scoring-Sheets.md) |
 | Exact agenda, facilitation and contingencies | [Facilitator notes](docs/05-Facilitator-Notes.md) |
 | Five-pattern reference and receipt form | [Field card](docs/06-Pattern-Reference-Card.md) |
+| Fork, freeze and submit a reviewable PR | [Submission workflow](docs/08-Submission-Workflow.md) |
 | Editable team handoff files | [Team templates](team-templates/) |
 | Optional, deliberately incomplete transport/storage scaffold | [Python starter](starter-python/) |
 | Source snapshot, API challenge and score validators | [Helper instructions](tools/README.md) |
@@ -48,7 +51,7 @@ The starter is not a finished app. `/health` and the placeholder UI establish on
 | 20:15–20:30 | Opening and five patterns |
 | 20:30–20:40 | Teams, plan, PRD and rubric |
 | 20:40–21:40 | Build, 60 minutes |
-| 21:40–22:00 | Verify; freeze source at 21:55; package receipts |
+| 21:40–22:00 | Verify; freeze and push source at 21:55; submit PR and receipts by 22:00 |
 | 22:00–22:05 | Short break and artifact handoff |
 | 22:05–22:40 | Independent cross-audit, 35 minutes |
 | 22:40–23:00 | Demos and contested findings |
@@ -59,7 +62,7 @@ Total: 180 minutes. Working app 40 points, evidence 30, **your team's audit of i
 
 ## Sharing and safety
 
-Work in a fresh fixture directory with fictional aliases. Do not use real conference registration, payments, messages, personal data, production services or existing project databases. Share only your inspected source archive and redacted receipts. Do not push participant solutions to this organizer repo. Public hosting is optional and unscored.
+Work in a fresh fixture directory with fictional aliases. Do not use real conference registration, payments, messages, personal data, production services or existing project databases. Inspect every file before publishing to your public fork or PR. Submit only fixture source and redacted receipts. Push to your own fork, then open a PR against organizer `main`; do not push directly to this repository. Submission PRs are review records and are not merged into `main`. Public app hosting is optional and unscored.
 
 The helper launcher is not an OS sandbox. It runs the reviewed command you give it and the app must honor its isolated state directory. Use an isolated OS/container environment for untrusted submissions. Do not grant agents permission to publish, message people or access unrelated workspaces. See [CONTRIBUTING](CONTRIBUTING.md).
 

@@ -1,5 +1,12 @@
 # Changes
 
+## Unreleased
+
+- Make a team fork and upstream PR the normal submission route, with a 21:55 source freeze and 22:00 handoff.
+- Preserve exact Git commits and app snapshots; separate evidence delivery and document an organizer-receipted offline fallback.
+- Add intake provenance to the judging packet and align participant/facilitator materials. Remove unrelated event references. Rubric version 1.1 and scoring weights are unchanged.
+
+
 ## 1.1.0 — rehearsal revision, 17 October 2026
 
 - Added a public, dependency-free participant kit with preflight, optional incomplete scaffold, source snapshot, black-box API challenges and explicit scoring validation.

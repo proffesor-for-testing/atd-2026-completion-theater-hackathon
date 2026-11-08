@@ -1,8 +1,14 @@
 # Evidence manifest
 
-Team: ______  Source checksum or full commit: _________________________________
+Team: ______  PR URL: ____________________  App directory: ____________________
 
-Freeze time: ______  Runtime: ______  State path: ______________________________
+Frozen full commit: ____________________  Snapshot sourceId: ____________________
+
+Archive SHA-256: ____________________  Evidence version / received at: ____________________
+
+Freeze time / timezone: ______  Runtime: ______  State path: ____________________
+
+Keep this completed manifest and redacted receipts outside the frozen app source. Attach to the PR or use the facilitator-recorded transfer path. Do not push new evidence commits to the frozen branch.
 
 | Criterion | Claim | Expected / observed | PASS / FAIL / NOT RUN | REPORTED / STATIC / EXECUTED | Raw receipt path / timestamp |
 | --- | --- | --- | --- | --- | --- |

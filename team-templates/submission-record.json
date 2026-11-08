@@ -1,0 +1,18 @@
+{
+  "deliveryMode": "pr",
+  "team": "Team A",
+  "prUrl": "https://github.com/proffesor-for-testing/atd-2026-completion-theater-hackathon/pull/REPLACE",
+  "forkUrl": "https://github.com/YOUR-ACCOUNT/atd-2026-completion-theater-hackathon",
+  "branch": "submission/team-a",
+  "commit": "REPLACE_WITH_FULL_40_CHARACTER_COMMIT",
+  "appPath": "starter-python",
+  "sourceReceivedAt": "2026-11-18T21:55:00+01:00",
+  "receivedAt": "2026-11-18T22:00:00+01:00",
+  "sourceId": "REPLACE_WITH_VERIFIED_64_CHARACTER_SOURCE_ID",
+  "artifactSha256": "REPLACE_WITH_RETAINED_ARCHIVE_SHA256",
+  "archivePath": "../team-a-retained.zip",
+  "evidencePath": "../team-a-evidence",
+  "evidenceVersion": "builder-v1",
+  "auditTargetTeam": "",
+  "verificationNotes": "REPLACE with actual observed head/ref, receipt times, baseline checks, late-change discrepancies or offline exception reason. Example timestamps are not observations."
+}

@@ -8,7 +8,7 @@ Facilitators: Dragan Spiridonov and Lalitkumar Bhamare. The responsibilities bel
 
 ## Purpose
 
-Participants build with AI agents, then independently investigate whether the delivered behavior and evidence support the completion claims. Reuse the HUSTEF five-pattern field guide, the empty-tests example and independent-verification material. Keep the opening short. The primary learning comes from executing and auditing, not from another full conference talk.
+Participants build with AI agents, then independently investigate whether the delivered behavior and evidence support the completion claims. Use the Completion Theater five-pattern field guide, the empty-tests example and independent-verification material. Keep the opening short. The primary learning comes from executing and auditing, not from another full conference talk.
 
 Use rules/rubric version 1.1 consistently. The frozen source is the judged object. Honest failures still earn evidence credit. No team needs to use AQE or a particular vendor. Tool spend, agent count, coverage percentage and polish do not substitute for evidence.
 
@@ -32,7 +32,7 @@ Total: 180 minutes. The build remains the advertised 60 minutes. No extra four-h
 
 - Agree roles with Lalit and check the live session slot and room with organizers.
 - Plan for 3–8 teams, normally 4–6 people each. This is a planning range, not a registration count. At 49–50 attendees, use eight teams with two groups of seven if needed and redistribute roles. Do not promise unlimited facilitation capacity.
-- Ask participants to arrive with a laptop, charger, working coding agent, available model access/credits, Git or an archive tool, and one local runtime they know. They can use a local model. No specific subscription is required.
+- Ask participants to arrive with a laptop, charger, working coding agent, available model access/credits, Git, one GitHub account per team, and one local runtime they know. Test each team's fork and ability to open an upstream PR before the build; keep an archive tool available for offline fallback. They can use a local model. No specific subscription is required.
 - Bring the deck as PPTX and PDF, participant PDFs, editable Markdown templates, a timer, USB/offline transfer media, paper and pens. Avoid relying on a single download link.
 - Arrange power, projector/HDMI adapter, room Wi-Fi and a local transfer method. Check whether venue networking prevents peer transfer.
 - Print one PRD and pattern card per team, one builder and audit checklist per team, one scoring sheet per team, and one master scoreboard for facilitators.
@@ -45,16 +45,16 @@ Suggested roles: product/question owner, agent operator, implementer/integrator,
 
 At 20:30 distribute 01–04, 06 and team-templates. Ask each team to name itself A–H, choose a known runtime, declare a local port and state directory, and read the eight acceptance criteria. Resolve questions publicly so all teams receive the same rule. A simple UI plus API and durable local state is enough. Discourage authentication, payment integrations and deployment.
 
-Each team uses a fresh disposable directory. Do not borrow a participant's production database, private repository or existing project memory store. Use fictional aliases. No credential sharing. Agents must stay inside the team workspace and must not send messages or publish anything on behalf of participants. Reviewing another team's supplied code does not authorize running arbitrary destructive scripts; inspect commands, dependency scripts and paths first and stop if a command escapes the fixture boundary.
+Each team forks the organizer repository and works on `submission/<team-id>` in a fresh disposable directory. Follow docs/08-Submission-Workflow.md for the canonical delivery and intake procedure. Do not borrow a participant's production database, private repository or existing project memory store. Use fictional aliases. No credential sharing. Agents must stay inside the team workspace. Participants authorize and inspect their own fork pushes and submission PRs; agents must not publish unrelated content or contact people. Reviewing another team's supplied code does not authorize running arbitrary destructive scripts; inspect commands, dependency scripts and paths first and stop if a command escapes the fixture boundary.
 
-## Opening script and HUSTEF reuse
+## Opening script and five patterns
 
 1. Welcome and show the confident claim next to the empty tests directory. Introduce it as an illustrative example of a mismatch, not a measured result from tonight.
-2. Walk the five HUSTEF patterns. Spend about one minute per pattern with an example of an observable check.
+2. Walk the five Completion Theater patterns. Spend about one minute per pattern with an example of an observable check.
 3. Explain that another team will execute checks against the exact delivered snapshot. An agent summary, a coverage badge or a persuasive demo alone cannot establish a pass.
 4. Explain the timeline, source freeze, scope and reward status. Say only: 'Rewards have not been decided. Tonight's scoring follows the published rubric.'
 
-Do not reuse the HUSTEF numerical research claims, tool-cost claims or product statistics for this opening. They are unnecessary for the exercise and would require separate current source verification. The original HUSTEF deck remains unchanged.
+Do not add numerical research claims, tool-cost claims or product statistics to this opening. They are unnecessary for the exercise and would require separate current source verification.
 
 ## Build checkpoints
 
@@ -64,16 +64,16 @@ Do not reuse the HUSTEF numerical research claims, tool-cost claims or product s
 - 21:25: remind teams to prioritize capacity, replay and restart. Optional features come later.
 - 21:35: five-minute warning. Ask teams to locate README, tests and the state path.
 - 21:40: stop adding features. Verification begins. Repairs are allowed only until 21:55.
-- 21:55: freeze source and tests. Record a checksum or clean commit. No late source replacement.
-- 22:00: evidence manifest and transfer artifact ready. Mark incomplete work explicitly.
+- 21:55: teams commit and push final source/tests. Record the full commit SHA and app path; no subsequent source pushes.
+- 22:00: submission PR and evidence location ready. Record the observed head SHA, receipt time and timezone in an organizer-owned intake record; retain the exact app snapshot and its sourceId/archive SHA-256. PR text and Git dates alone do not prove timely delivery. Mark incomplete work explicitly.
 
-Explain 'Uncommitted Illusion' as missing delivered work. A clean commit is one option, not a compulsory Git ceremony. A checksummed source archive that contains all intended work is equally valid. An uncommitted file outside that artifact cannot support a claim about it.
+Explain 'Uncommitted Illusion' as missing delivered work. The recorded commit must contain every intended app file and test; local untracked files do not count. The PR is the delivery channel, not a freeze mechanism. Preserve the accepted commit as a local ref and a checksummed app snapshot before review. If GitHub is unavailable, receive the checksummed snapshot and evidence by the same deadlines, record the exception and time, and later link the PR to those exact frozen bytes. Do not substitute a later repair.
 
 ## Audit pairing and blocked targets
 
 Use a directed ring: A audits B, B audits C, and the last team audits A. This gives every team one target even with an odd number of teams. For two teams, swap. With one team, facilitators audit and the team investigates a facilitator-approved copy; label the reduced independence.
 
-Give the auditor the snapshot, not the builder's working directory. Builders can explain run instructions, but auditors perform the checks. Audit evidence stays in a separate sidecar folder bound to the target source identity.
+Give the auditor the retained snapshot and organizer intake record, not the builder's working directory or a moving PR branch. Do not merge submissions into organizer main. Builders can explain run instructions, but auditors perform the checks. Audit evidence stays in a separate sidecar folder bound to the target source identity.
 
 If a target cannot start after five minutes, record the exact failure and request a facilitator. The auditor may still inspect the target and report the blocked start. If enough time remains, assign a second reachable artifact and record its identity separately. Never present that second target as evidence about the first. Judge C2–C3 against the named target actually investigated. C1 requires a successful independent start. C4 can reward a well-evidenced blocked result. Do not reduce a sound target's score because peers found no bugs.
 
@@ -108,4 +108,4 @@ Return the team's evidence and score sheet. Share only materials teams authorize
 
 Program and scoring weights: https://agiletestingdays.com/2026/session/completion-theater-hackathon-build-it-prove-it-smash-it/
 
-Opening examples and five-pattern field guide adapted from Dragan Spiridonov’s HUSTEF 2026 Completion Theater material. The original talk remains unchanged. The public dry-run report distinguishes executed technical evidence from untested human-team and venue assumptions.
+Opening examples and the five-pattern field guide are by Dragan Spiridonov, adapted for this Completion Theater hackathon. The public dry-run report distinguishes executed technical evidence from untested human-team and venue assumptions.

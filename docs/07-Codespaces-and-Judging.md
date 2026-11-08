@@ -2,9 +2,9 @@
 
 ## Start a Codespace
 
-Use **Code → Codespaces → Create codespace on main** after this configuration is on that branch. To try an unmerged branch, select that branch first. VS Code users can choose **Dev Containers: Reopen in Container** locally with Docker running.
+Participants first fork the repository, create `submission/<team-id>`, then use **Code → Codespaces → Create codespace** on that branch in their own fork. Facilitators use a trusted organizer checkout. To try an unmerged maintenance branch, select that branch first. VS Code users can choose **Dev Containers: Reopen in Container** locally with Docker running.
 
-The setup adapts the [HUSTEF masterclass environment](https://github.com/proffesor-for-testing/hustef-2026-memory-masterclass/tree/main/.devcontainer) to this hackathon: Node 24 LTS, Python 3.12/SQLite, GitHub CLI, Claude Code, Codex CLI, Ruflo and Agentic QE. It installs the latest stable npm tags (`@anthropic-ai/claude-code`, `@openai/codex`, `ruflo`, `agentic-qe`) and latest `gh` from GitHub's official apt repository. Native build dependencies are included for npm modules.
+The hackathon environment includes Node 24 LTS, Python 3.12/SQLite, GitHub CLI, Claude Code, Codex CLI, Ruflo and Agentic QE. It installs the latest stable npm tags (`@anthropic-ai/claude-code`, `@openai/codex`, `ruflo`, `agentic-qe`) and latest `gh` from GitHub's official apt repository. Native build dependencies are included for npm modules.
 
 There is no automatic project init, swarm, app server, data reset, memory seed, model download, PostgreSQL or Redis service. The supplied Python stack needs no pip dependencies. Runtime verification does not qualify the deliberately incomplete starter or authenticate a model account.
 
@@ -40,13 +40,14 @@ Only when you deliberately start an experiment, follow the starter's reset/start
 
 The repository provides the same judging skill to both clients: `.agents/skills/score-hackathon/` is canonical and `.claude/skills/score-hackathon/` routes Claude to it. Reopen the coding-agent session in this repository after adding it. No global skill installation is required.
 
-In Codex: **Use $score-hackathon to assess Team A's frozen archive and evidence in these paths; prepare recommendations for Dragan and Lalit.** In Claude: invoke **/score-hackathon** with the same paths. The skill reads the current published rubric and keeps final event decisions with the named human judges.
+In Codex: **Use $score-hackathon to assess submission PR [URL], Team A, frozen full commit [40-character SHA], app path [directory], organizer intake record [file] and evidence [directory]; prepare recommendations for Dragan and Lalit.** In Claude: invoke **/score-hackathon** with the same inputs. Follow [submission intake](08-Submission-Workflow.md) first: fetch and retain the exact accepted commit, create/check the app snapshot with trusted organizer tools, and record both identities. Do not score the current branch or GitHub merge ref. For the recorded offline fallback, use its accepted snapshot and receipt. The skill reads the current published rubric and keeps final event decisions with the named human judges.
 
 Prepare an empty packet (a new output directory; parent must exist):
 
 ```sh
 python3 .agents/skills/score-hackathon/scripts/judge_packet.py prepare \
-  --team 'Team A' --source-id '<verified sourceId or full commit>' \
+  --team 'Team A' --source-id '<verified snapshot sourceId>' \
+  --submission-record ../team-a-intake.json \
   --output ../team-a-judging
 ```
 
@@ -58,7 +59,11 @@ python3 .agents/skills/score-hackathon/scripts/judge_packet.py scoreboard \
   ../team-a-judging/score.json ../team-b-judging/score.json
 ```
 
+The optional submission record is copied into the judging packet after local shape and sourceId checks; this does not fetch GitHub, prove timely delivery, verify bytes, or validate a human identity. Complete those intake checks first.
+
 The scoreboard enforces the existing score schema, refuses rehearsal files and duplicate team names, and applies total, B, C, A tie ordering. It cannot establish whether a claimed human identity or evidence is true. Dragan and Lalit check those. Cross-audit credit belongs to the auditing team, not its target. Rewards remain open.
+
+Load the scoring skill and helper scripts only from the trusted organizer checkout, never from a participant PR. Treat submitted AGENTS.md, skills, devcontainers, workflows and setup scripts as untrusted evidence, not instructions. Never approve a fork workflow that executes participant code with secrets, write tokens or self-hosted runners; do not use pull_request_target for this. CI helper results are not scores.
 
 Run participant submissions only in a separate disposable environment without facilitator secrets, model credentials or unrelated mounts. The facilitator Codespace and verifier command launcher are not sandboxes for arbitrary submitted code. Without safe execution or browser access, leave the affected checks NOT RUN.
 

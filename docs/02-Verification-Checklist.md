@@ -2,7 +2,11 @@
 
 Team: ____________________  Verifier: ____________________
 
-Frozen source checksum or full commit: _______________________________________
+PR URL / number: ____________________  App directory: ____________________
+
+Frozen full commit: ____________________  Snapshot sourceId: ____________________
+
+Archive SHA-256 (if transferred): ____________________
 
 Verification window: 21:40–22:00. Fixes are allowed until 21:55. Freeze source and tests at 21:55; package evidence during the final five minutes. Do not add features during this round.
 
@@ -46,9 +50,11 @@ The judge awards six binary items, 5 points each: exact source binding; reproduc
 
 ## Final handoff
 
-- [ ] Frozen source identity is recorded and the archive opens.
+- [ ] Source/tests committed and pushed at 21:55; full commit and app directory recorded.
+- [ ] PR to organizer main submitted by 22:00; facilitator records receipt and retains the exact snapshot.
+- [ ] Snapshot sourceId and archive SHA-256 recorded; the retained archive opens.
 - [ ] README covers runtime, install, start, reset, test, state path and API mapping.
-- [ ] Evidence manifest points to readable logs and UI evidence, not agent summaries alone.
+- [ ] Evidence manifest and redacted receipts are delivered outside the frozen source through the PR or recorded transfer path. They point to readable logs and UI evidence, not agent summaries alone.
 - [ ] Known failures and unexecuted checks are visible.
 - [ ] Private configuration, credentials and unrelated files are excluded.
 - [ ] Auditor has a working transfer path and a disposable directory of their own.

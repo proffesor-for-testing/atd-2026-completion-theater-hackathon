@@ -18,7 +18,11 @@ State file/database path and how to inspect a record:
 
 API field mapping, sample request and response:
 
-Frozen source identity and artifact path:
+Fork URL and submission branch:
+
+Declared app directory (contains this README, all source, adapter and tests):
+
+PR URL and frozen full commit are recorded in the PR / evidence manifest after the final commit, not by a circular self-referencing commit. Snapshot sourceId and archive SHA-256 are recorded alongside them:
 
 Known failures, missing features and unexecuted checks:
 
