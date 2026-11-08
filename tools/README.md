@@ -4,13 +4,16 @@ Python 3.11+ standard library; no package install. Run from the participant repo
 
 ## Freeze source
 
+For event delivery follow [fork → freeze → PR](../docs/08-Submission-Workflow.md). The PR carries the submission; its recorded full commit and retained app snapshot define the baseline. These snapshot commands package source, not a GitHub submission or proof of timely receipt. GitHub Download ZIP does not contain this tool's manifest and cannot be passed directly to `check`.
+
 ```sh
-python3 tools/snapshot.py create starter-python ../team-source.zip
+python3 tools/submission.py snapshot --commit FULL_40_CHARACTER_SHA \
+  --app-path starter-python --archive ../team-source.zip
 python3 tools/snapshot.py check ../team-source.zip
 python3 tools/snapshot.py extract ../team-source.zip ../team-audit-copy
 ```
 
-Use your app directory instead of `starter-python`. Archives and extracted directories must be new. The archive must be outside the app source. Extraction never merges into an existing directory. No reset/deletion of a database occurs. `sourceId` hashes sorted relative filenames and file content hashes; `artifactSha256` hashes the archive bytes. Both are returned by all three operations. Record both when transferring a ZIP. Extracted source retains `sourceId`; file timestamps do not affect it.
+Use your app directory instead of `starter-python` and the full locally available frozen commit instead of the placeholder. The submission helper reads committed Git blobs without running code or applying checkout/export attributes. For the facilitator-recorded offline fallback without Git, `python3 tools/snapshot.py create APP_DIRECTORY ../team-source.zip` packages the inspected working directory instead; record that distinction. Archives and extracted directories must be new. The archive must be outside the app source. Extraction never merges into an existing directory. No reset/deletion of a database occurs. `sourceId` hashes sorted relative filenames and file content hashes; `artifactSha256` hashes the archive bytes. Both are returned by all three operations. Record both when transferring a ZIP. Extracted source retains `sourceId`; file timestamps do not affect it.
 
 Excluded: `.git`, `.venv`, `venv`, `node_modules`, `__pycache__`, `.pytest_cache`, `evidence`, `runtime`, `data`, `.state`, `dist`, `build`; `.env*` except `.env.example`; database, SQLite, log, bytecode and journal files. Keep actual source out of these paths. Exclusions are a convenience, **not a secret scanner**: inspect the archive before sharing. Source symlinks are refused. File modes are not preserved: invoke scripts with their interpreter and document any platform setup.
 

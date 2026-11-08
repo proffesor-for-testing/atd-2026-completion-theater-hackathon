@@ -50,6 +50,8 @@ def parse(path):
     lines=path.read_text().splitlines(); story=[]; i=0
     compact=path.name=='06-Pattern-Reference-Card.md'
     body=ParagraphStyle(name='CompactBody',parent=styles['Body'],fontSize=9.4,leading=12,spaceAfter=5) if compact else styles['Body']
+    if path.name == '02-Verification-Checklist.md':
+        body = ParagraphStyle(name='ChecklistBody', parent=styles['Body'], fontSize=9.3, leading=12, spaceAfter=5)
     while i<len(lines):
         line=lines[i].strip()
         if not line: i+=1; continue
@@ -65,7 +67,7 @@ def parse(path):
         elif line.startswith('## '):
             if line=='## Finding or bounded clean investigation':story.append(PageBreak())
             story.append(paragraph(line[3:],'H2x'))
-        elif line.startswith('- '):story.append(paragraph('[ ] '+line[6:] if line.startswith('- [ ] ') else '- '+line[2:]))
+        elif line.startswith('- '):story.append(Paragraph(inline('[ ] '+line[6:] if line.startswith('- [ ] ') else '- '+line[2:]),body))
         else:story.append(Paragraph(inline(line),body))
         i+=1
     return story

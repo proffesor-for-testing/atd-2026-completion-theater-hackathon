@@ -41,7 +41,12 @@ def create(root, archive):
     archive = Path(archive)
     if archive.resolve().is_relative_to(Path(root).resolve()):
         raise ValueError('Archive must be outside source')
-    files = source_files(root)
+    return write_archive(source_files(root), archive)
+
+def write_archive(files, archive):
+    # Keep Git path bytes distinct even on case-insensitive host filesystems.
+    if not files:
+        raise ValueError('Empty source')
     source_id, rows = identity(files)
     with zipfile.ZipFile(archive, 'x', compression=zipfile.ZIP_DEFLATED) as z:
         for name, data in sorted(files.items()):

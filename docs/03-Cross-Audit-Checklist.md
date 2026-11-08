@@ -4,7 +4,7 @@ Auditing team: __________  Target team: __________  Facilitator: __________
 
 Target source identity: ____________________________________________________
 
-Audit window: 22:05–22:40. Inspect the frozen artifact in a disposable copy. The builder can explain commands but does not operate the auditor's checks. Agree to the review of this fixture app only. Never inspect unrelated directories, accounts, production systems or personal files.
+Audit window: 22:05–22:40. Use the facilitator-recorded PR, full frozen commit, app path and retained snapshot, not the current branch tip. Inspect that frozen artifact in a disposable copy. Keep your audit receipts outside the target source and report them with your auditing team ID and target identity. The builder can explain commands but does not operate the auditor's checks. Agree to the review of this fixture app only. Never inspect unrelated directories, accounts, production systems or personal files.
 
 ## A 35-minute investigation
 

@@ -67,6 +67,8 @@ Finish the eight criteria before adding waitlists, search, accessibility improve
 
 ## What to hand over
 
-At 21:55 freeze source and tests. Create a source snapshot with a SHA-256 checksum, or use a clean commit with a recorded full hash. Include README run/reset/test commands, runtime version, dependency lockfiles where supported, state location, API field mapping, test source, known gaps and the evidence manifest template. No push or public repository is required. Provide no credentials, AI tokens, private .env files, unrelated history or real attendee records. Use .env.example for configuration names only.
+Use one fork and submission branch per team. At 21:55 CET commit and push the final source/tests, record the full 40-character commit SHA and declared app directory, and stop pushing to that branch. By 22:00 open a PR to organizer main with the completed submission fields and redacted evidence location. The exact commit, not the moving PR branch or merge preview, is judged. Follow docs/08-Submission-Workflow.md for commands, retained snapshots and the facilitator-assisted offline fallback.
 
-Keep evidence and audit reports outside the frozen source archive. Bind each evidence record to its source checksum or commit. If your source changes before freeze, rerun affected checks. Work after freeze belongs in a separately named copy and does not replace the judged baseline.
+Include README run/reset/test commands, runtime version, dependency lockfiles where supported, state location, API field mapping, test source and known gaps inside the declared app directory. Provide no credentials, AI tokens, private .env files, unrelated history or real attendee records. Use .env.example for configuration names only.
+
+Keep evidence and audit reports outside the app directory and frozen source archive. Deliver them through PR attachments/comments or the facilitator-recorded transfer path, not new commits on the frozen branch. Bind each evidence record to the full commit and snapshot sourceId. If your source changes before freeze, rerun affected checks. Work after freeze belongs in a separately named copy and does not replace the judged baseline.

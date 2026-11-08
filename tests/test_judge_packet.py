@@ -58,5 +58,44 @@ class JudgePacketTests(unittest.TestCase):
             packet.scoreboard([self.write_score('Trial', mode='rehearsal')])
 
 
+class SubmissionRecordTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.record = json.loads((ROOT / 'team-templates/submission-record.json').read_text())
+        self.record.update(prUrl='https://github.com/proffesor-for-testing/atd-2026-completion-theater-hackathon/pull/17',
+                           forkUrl='https://github.com/team/atd-2026-completion-theater-hackathon',
+                           commit='a' * 40, sourceId='b' * 64, artifactSha256='c' * 64,
+                           verificationNotes='Fixture: observed frozen head, retained exact bytes.')
+
+    def test_preserves_provenance_without_awarding_points(self):
+        src = self.root / 'intake.json'
+        src.write_text(json.dumps(self.record))
+        out = self.root / 'packet'
+        packet.prepare('Team A', 'b' * 64, out, src)
+        self.assertEqual(json.loads((out / 'submission.json').read_text()), self.record)
+        score = json.loads((out / 'score.json').read_text())
+        self.assertEqual(packet.validate(score)['total'], 0)
+        self.assertTrue(all(row['status'] == 'NOT RUN' for row in score['rows'].values()))
+
+    def test_rejects_bad_or_mismatched_metadata_before_output(self):
+        for key, value in [('sourceId', 'd' * 64), ('team', 'Team B'), ('commit', 'main'),
+                           ('prUrl', 'https://github.com/other/repo/pull/17'),
+                           ('appPath', '../app'), ('receivedAt', '2026-11-18T22:00:00'),
+                           ('artifactSha256', 'abc'), ('verificationNotes', '')]:
+            with self.subTest(key=key):
+                data = dict(self.record, **{key: value})
+                src = self.root / 'intake.json'; src.write_text(json.dumps(data))
+                with self.assertRaises(ValueError):
+                    packet.prepare('Team A', 'b' * 64, self.root / 'bad', src)
+                self.assertFalse((self.root / 'bad').exists())
+
+    def test_offline_record_can_honestly_omit_github_identity(self):
+        self.record.update(deliveryMode='offline', prUrl='', forkUrl='', branch='', commit='',
+                           verificationNotes='Fixture: USB snapshot received at recorded time; network unavailable.')
+        self.assertEqual(packet.validate_submission(self.record, 'Team A', 'b' * 64), self.record)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -2,6 +2,8 @@
 
 Team: ______  Local app port: ______  Disposable workspace: ______
 
+Fork URL: ______  Branch: submission/______  App directory: ______
+
 Roles (combine or rotate as needed):
 
 - Product/question owner:
@@ -26,4 +28,4 @@ Tasks assigned to agents, allowed files and stop conditions:
 
 Optional work only after core criteria:
 
-Freeze source and tests at 21:55. Rewards remain open.
+Commit and push source/tests by 21:55 CET; record the full SHA. Submit the PR to organizer main with the evidence location by 22:00. Stop pushing to the frozen branch. Use docs/08-Submission-Workflow.md. Rewards remain open.
