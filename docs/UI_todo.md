@@ -10,7 +10,7 @@ Work through these in order. Each UI step is a test-first cycle: write a failing
 
 - [x] Reservation form (session, alias, request key) that posts to `POST /reservations`
 - [x] Seat counts load from `GET /sessions` and refresh after each action
-- [ ] Cancel control per reservation, posting to `/reservations/{id}/cancel`
+- [x] Cancel control per reservation, posting to `/reservations/{id}/cancel`
 - [ ] AC-02: UI counts agree with `GET /sessions` (acceptance test on the page)
 - [ ] AC-03: remaining CT-101 seats drop to 1 in both `/sessions` and the UI
 - [ ] AC-03: unknown `GET /reservations/{id}` returns a 4xx JSON error (test not yet written)

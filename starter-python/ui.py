@@ -16,6 +16,31 @@ async function refreshCounts() {
     return item;
   }));
 }
+const reservations = [];
+function renderReservations() {
+  const list = document.getElementById('reservation-list');
+  list.replaceChildren(...reservations.map((r) => {
+    const item = document.createElement('li');
+    item.textContent = `${r.id} ${r.sessionId} ${r.attendeeAlias} ${r.status} `;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Cancel';
+    button.addEventListener('click', async () => {
+      const response = await fetch(`/reservations/${r.id}/cancel`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: '{}',
+      });
+      if (response.ok) {
+        Object.assign(r, await response.json());
+        renderReservations();
+      }
+      await refreshCounts();
+    });
+    item.append(button);
+    return item;
+  }));
+}
 const form = document.getElementById('reservation-form');
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -24,11 +49,15 @@ form.addEventListener('submit', async (event) => {
     attendeeAlias: form.elements.attendeeAlias.value,
     requestKey: form.elements.requestKey.value,
   };
-  await fetch('/reservations', {
+  const response = await fetch('/reservations', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
   });
+  if (response.ok) {
+    reservations.push(await response.json());
+    renderReservations();
+  }
   await refreshCounts();
 });
 refreshCounts();
@@ -73,5 +102,6 @@ def render_page(sessions: list[dict]) -> str:
         f'<ul id="seat-counts">{items}</ul>'
         "<h2>Reserve a seat</h2>"
         f"{reservation_form(sessions)}"
+        '<h2>Reservations</h2><ul id="reservation-list"></ul>'
         f"<script>{RESERVATION_SCRIPT}</script></main></html>\n"
     )
