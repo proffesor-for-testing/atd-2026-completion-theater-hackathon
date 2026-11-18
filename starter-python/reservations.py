@@ -20,3 +20,17 @@ def add_reservation(state: dict, record: dict) -> dict:
 def find_reservation(state: dict, reservation_id: str) -> dict | None:
     """Pure: the stored record with this ID, or None."""
     return next((r for r in state["reservations"] if r["id"] == reservation_id), None)
+
+
+class CapacityFull(Exception):
+    """Raised when a session has no remaining seats."""
+
+
+def add_active_reservation(state: dict, record: dict) -> dict:
+    """Pure: state with the reservation added, or CapacityFull if its session is full."""
+    session = next(s for s in state["sessions"] if s["id"] == record["sessionId"])
+    active = sum(1 for r in state["reservations"]
+                 if r["sessionId"] == record["sessionId"] and r["status"] == "active")
+    if active >= session["capacity"]:
+        raise CapacityFull(f"No remaining seats in {record['sessionId']}")
+    return add_reservation(state, record)

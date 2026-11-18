@@ -109,8 +109,14 @@ class Handler(BaseHTTPRequestHandler):
             record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
                                                   body['attendeeAlias'], body['requestKey'])
             state_file = DATA / STATE_FILE
-            storage.save_state(state_file, reservations.add_reservation(
-                storage.load_state(state_file), record))
+            try:
+                updated = reservations.add_active_reservation(
+                    storage.load_state(state_file), record)
+            except reservations.CapacityFull as error:
+                self.json_response(409, {'error': {'code': 'CAPACITY_FULL',
+                    'message': str(error)}})
+                return
+            storage.save_state(state_file, updated)
             self.json_response(201, record)
         else:
             self.json_response(501, {'error': {'code': 'NOT_IMPLEMENTED',
