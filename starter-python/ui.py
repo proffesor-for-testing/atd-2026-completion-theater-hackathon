@@ -16,6 +16,23 @@ async function refreshCounts() {
     return item;
   }));
 }
+function showError(message) {
+  document.getElementById('error-text').textContent = message;
+  document.getElementById('error-message').hidden = false;
+}
+document.getElementById('dismiss-error').addEventListener('click', () => {
+  document.getElementById('error-message').hidden = true;
+});
+async function reportFailure(response) {
+  let message = `Request failed with status ${response.status}`;
+  try {
+    const data = await response.json();
+    if (data.error && data.error.message) message = data.error.message;
+  } catch (e) {
+    // keep the generic message when the body is not JSON
+  }
+  showError(message);
+}
 const reservations = [];
 function renderReservations() {
   const list = document.getElementById('reservation-list');
@@ -31,7 +48,9 @@ function renderReservations() {
         headers: {'Content-Type': 'application/json'},
         body: '{}',
       });
-      if (response.ok) {
+      if (!response.ok) {
+        await reportFailure(response);
+      } else {
         Object.assign(r, await response.json());
         renderReservations();
       }
@@ -54,7 +73,9 @@ form.addEventListener('submit', async (event) => {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
   });
-  if (response.ok) {
+  if (!response.ok) {
+    await reportFailure(response);
+  } else {
     reservations.push(await response.json());
     renderReservations();
   }
@@ -98,6 +119,8 @@ def render_page(sessions: list[dict]) -> str:
         '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
         "<title>Session Seat Desk</title>\n"
         "<main><h1>Session Seat Desk</h1>\n"
+        '<div id="error-message" role="alert" hidden><span id="error-text"></span> '
+        '<button type="button" id="dismiss-error">Dismiss</button></div>\n'
         "<h2>Sessions</h2>\n"
         f'<ul id="seat-counts">{items}</ul>'
         "<h2>Reserve a seat</h2>"

@@ -17,7 +17,7 @@ Work through these in order. Each UI step is a test-first cycle: write a failing
 - [ ] AC-08: the process stays available after each rejected request
 - [ ] Reservation IDs and request keys are unique across sessions (domain rule)
 - [ ] AC-01: README steps start the app from a clean copy and open the UI
-- [ ] AC-09 (after ruling): visible, dismissable error messages in the UI
+- [x] AC-09 (after ruling): visible, dismissable error messages in the UI
 - [ ] AC-09 (after ruling): after a failure the UI still accepts actions and its counts match `/sessions`
 
 ## Housekeeping
