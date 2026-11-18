@@ -67,11 +67,23 @@ class HardeningTests(unittest.TestCase):
             with self.subTest(alias=repr(alias)):
                 self.assert_rejected('POST', '/reservations', self.reserve_body(alias, f'INV{i}'))
 
-    def test_control_character_in_alias_rejected(self):
-        self.assert_rejected('POST', '/reservations', self.reserve_body('Ad\na', 'CC1'))
+    def test_whitespace_request_key_is_a_valid_non_empty_key(self):
+        # PRD: 'The request key must be a non-empty string.' '   ' is non-empty, so it is accepted and replays.
+        first = self.raw('POST', '/reservations', self.reserve_body('Wes', '   '))
+        replay = self.raw('POST', '/reservations', self.reserve_body('Wes', '   '))
+        self.assertEqual(first[0], 201)
+        self.assertEqual(replay[0], 200)
+        self.assertEqual(json.loads(first[2])['id'], json.loads(replay[2])['id'])
 
-    def test_whitespace_only_request_key_rejected(self):
-        self.assert_rejected('POST', '/reservations', self.reserve_body('Ada', '   '))
+    def test_empty_request_key_rejected(self):
+        self.assert_rejected('POST', '/reservations', self.reserve_body('Ada', ''))
+
+    def test_overlong_fields_rejected(self):
+        self.assert_rejected('POST', '/reservations', self.reserve_body('A' * 201, 'LONG1'))
+        self.assert_rejected('POST', '/reservations', self.reserve_body('Ada', 'k' * 201))
+
+    def test_oversized_body_rejected(self):
+        self.assert_rejected('POST', '/reservations', b'{"pad":"' + b'x' * 70000 + b'"}')
 
     def test_lone_surrogate_rejected_not_500(self):
         body = b'{"sessionId":"CT-102","attendeeAlias":"\\ud800","requestKey":"S1"}'

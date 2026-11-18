@@ -146,8 +146,8 @@ def validate_reservation_request(body):
         raise ApiError(400, 'INVALID_SESSION_ID', 'sessionId must be a non-empty string.')
     if not isinstance(alias, str) or not alias.strip():
         raise ApiError(400, 'INVALID_ALIAS', 'attendeeAlias must be a non-blank string.')
-    if not isinstance(key, str) or not key.strip():
-        raise ApiError(400, 'INVALID_REQUEST_KEY', 'requestKey must be a non-empty, non-blank string.')
+    if not isinstance(key, str) or key == '':
+        raise ApiError(400, 'INVALID_REQUEST_KEY', 'requestKey must be a non-empty string.')
     for name, value in (('sessionId', session_id), ('attendeeAlias', alias), ('requestKey', key)):
         try:
             value.encode('utf-8')
@@ -156,8 +156,6 @@ def validate_reservation_request(body):
     alias = alias.strip()
     if not any(unicodedata.category(ch)[0] not in 'CZ' for ch in alias):
         raise ApiError(400, 'INVALID_ALIAS', 'attendeeAlias must contain visible characters.')
-    if any(unicodedata.category(ch) == 'Cc' for ch in alias):
-        raise ApiError(400, 'INVALID_ALIAS', 'attendeeAlias must not contain control characters.')
     if len(alias) > MAX_ALIAS:
         raise ApiError(400, 'INVALID_ALIAS', f'attendeeAlias must be at most {MAX_ALIAS} characters.')
     if len(key) > MAX_KEY:

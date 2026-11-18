@@ -2,7 +2,7 @@
 
 A local JSON API plus a basic browser UI for reserving seats in two fictional workshops (CT-101, CT-102). State lives in SQLite and survives restarts. Python 3.11+, **standard library only**: there is nothing to install.
 
-> **Disclosure.** This app was built with AI agents before the session's 60-minute build window. Every claim below is backed by a command you can rerun against the frozen commit. Judge the receipts, not this README.
+> **Disclosure.** This app was built with AI agents before the session's 60-minute build window. Behavioural claims below are backed by tests or commands in this directory. Process claims (who wrote which tests, mutation results, UI checks) are backed by receipts in the evidence sidecar attached to the PR, not by this commit. Judge the receipts, not this README.
 
 ## Run
 
@@ -41,7 +41,7 @@ Reset refuses to touch a `seats.db` that lacks the fixture ownership marker. Use
 
 Reservation: `{"id","sessionId","attendeeAlias","requestKey","status","createdAt","cancelledAt"}`. `id` is a UUID string. The alias is stored trimmed. Comparisons are otherwise case-sensitive. `adapter.json` uses the default mapping (no wrapper).
 
-Input rules: `requestKey` must be a non-blank string, and the alias must contain at least one visible character (zero-width or invisible-only aliases are rejected, as are control characters). Invalid Unicode, deeply nested JSON and malformed request lines get 400/405 JSON, never 500.
+Input rules: `requestKey` must be a non-empty string, exactly as the PRD says (`"   "` is a valid key). The alias is trimmed and must contain at least one visible character; zero-width or invisible-only aliases count as blank. Both fields are limited to 200 characters and the request body to 64 KB (413). Invalid Unicode, deeply nested JSON and malformed request lines get 400/405 JSON, never 500.
 
 Order of decisions in `POST /reservations`: validate input, then session exists (so reusing K1 with an unknown session gives 404, not 409; both are rejections with no state change), then **key replay or conflict**, then capacity, then insert. A replay therefore returns the original record even when the session is now full or the booking was cancelled. Every check-then-write runs under one process-wide lock **and** a SQLite `BEGIN IMMEDIATE` transaction.
 
@@ -49,9 +49,9 @@ Order of decisions in `POST /reservations`: validate input, then session exists 
 
 | Suite | What it does | Independence |
 | --- | --- | --- |
-| `test_acceptance.py` (24 tests) | Black-box tests for AC-02 to AC-08: starts the real server as a subprocess, uses a fresh `DATA_DIR` per test, runs real restarts, 5 race batches of 10 threads, and reads SQLite directly | Written by a separate agent (AQE `qe-tdd-specialist`) **from the PRD only**, without reading `app.py` |
+| `test_acceptance.py` (24 tests) | Black-box tests for AC-02 to AC-08: starts the real server as a subprocess, uses a fresh `DATA_DIR` per test, runs real restarts, 5 race batches of 10 threads, and reads SQLite directly | Written by a separate agent (AQE `qe-tdd-specialist`) instructed to work from the PRD only, without reading `app.py`. The brief is in the sidecar; independence is a process claim, not something this commit can prove |
 | `test_store_check.py` (6 tests) | `app.py --check` passes on a clean store and **fails** on 5 kinds of tampering: reactivated booking, ghost row, overbooking, alias edited in place, rewritten audit history | Negative controls for the checker itself |
-| `test_hardening.py` (9 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines | Each was a confirmed defect before the fix |
+| `test_hardening.py` (11 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines, size limits, PRD-literal request keys | Each was reported as a defect by the reviewers before the fix (their reports are in the sidecar) |
 | `tools/verify.py` (organizer) | API challenges for AC-02 to AC-08, including 10 concurrent batches and a real process restart | Organizer code, unmodified |
 
 Coverage was **not measured**, and we make no coverage claim. The sensitivity of the tests is shown with mutation testing (see the evidence manifest), not with a percentage.
@@ -67,6 +67,9 @@ Coverage was **not measured**, and we make no coverage claim. The sensitivity of
 - The UI was checked in Chromium on Linux only. No screen-reader test was done.
 - Slow or stalled clients are disconnected after 15 s. The thread count is still unbounded under a flood of connections; this is a local fixture, not a hardened server.
 - `--check` assumes the audit log is written only by this app. Someone with write access to the file can recompute the chain, so it shows inconsistency, not tamper-proofing against an attacker.
+- Deliberate choices beyond the PRD: invisible-only aliases are treated as blank; 200-character limits on alias and key. Aliases differing only in invisible characters (for example `\u200bAda` and `Ada`) are different attendees, because comparisons are exact.
+- `GET /sessions` can return 503 `STORE_MISSING` if the database file is deleted while the server runs.
+- Tested on Linux only; the Windows `py -3` command is untested.
 - There is no authentication, by design (PRD scope).
 
 ## Handoff
