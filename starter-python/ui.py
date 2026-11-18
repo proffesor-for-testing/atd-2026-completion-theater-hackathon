@@ -5,6 +5,41 @@ activeCount, remainingSeats.
 """
 import html
 
+RESERVATION_SCRIPT = """
+const form = document.getElementById('reservation-form');
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const body = {
+    sessionId: form.elements.sessionId.value,
+    attendeeAlias: form.elements.attendeeAlias.value,
+    requestKey: form.elements.requestKey.value,
+  };
+  await fetch('/reservations', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+});
+"""
+
+
+def reservation_form(sessions: list[dict]) -> str:
+    options = "".join(
+        '<option value="{id}">{id}</option>'.format(id=html.escape(s["id"]))
+        for s in sessions
+    )
+    return (
+        '<form id="reservation-form" method="post" action="/reservations">'
+        '<p><label for="sessionId">Session</label> '
+        f'<select id="sessionId" name="sessionId">{options}</select></p>'
+        '<p><label for="attendeeAlias">Attendee alias</label> '
+        '<input id="attendeeAlias" name="attendeeAlias" type="text"></p>'
+        '<p><label for="requestKey">Request key</label> '
+        '<input id="requestKey" name="requestKey" type="text"></p>'
+        '<button type="submit">Reserve seat</button>'
+        '</form>'
+    )
+
 
 def render_page(sessions: list[dict]) -> str:
     items = "".join(
@@ -23,5 +58,8 @@ def render_page(sessions: list[dict]) -> str:
         "<title>Session Seat Desk</title>\n"
         "<main><h1>Session Seat Desk</h1>\n"
         "<h2>Sessions</h2>\n"
-        f"<ul>{items}</ul></main></html>\n"
+        f"<ul>{items}</ul>"
+        "<h2>Reserve a seat</h2>"
+        f"{reservation_form(sessions)}"
+        f"<script>{RESERVATION_SCRIPT}</script></main></html>\n"
     )
