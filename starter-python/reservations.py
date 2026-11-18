@@ -6,7 +6,7 @@ def new_reservation(reservation_id: str, session_id: str, alias: str, request_ke
     return {
         "id": reservation_id,
         "sessionId": session_id,
-        "attendeeAlias": alias,
+        "attendeeAlias": alias.strip(),
         "requestKey": request_key,
         "status": "active",
     }

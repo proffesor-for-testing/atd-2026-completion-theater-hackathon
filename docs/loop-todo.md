@@ -22,7 +22,7 @@ Steps are in order. Each one is a single test-first cycle.
 - [x] AC-04a: a third distinct CT-101 request is rejected with a clear capacity error and creates no reservation
 - [x] AC-04b: concurrent distinct requests on a one-seat state give exactly one success and active count 2
 - [x] AC-05: same key, session and alias returns the original reservation without using another seat
-- [ ] AC-05: a replay whose alias differs only by surrounding spaces returns the original reservation
+- [x] AC-05: a replay whose alias differs only by surrounding spaces returns the original reservation
 - [ ] AC-05: same key with a different session or alias returns a conflict and changes no state
 - [ ] AC-06: cancelling an active reservation releases exactly one seat
 - [ ] AC-06: repeated cancellation reports cancelled and leaves the count unchanged
