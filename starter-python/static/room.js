@@ -76,7 +76,34 @@ function table(scene, x, seats, id, title) {
   return { id, title, root, chairs, bulbMat, glow, pool, tags: [] };
 }
 
-export function mount(container, { onPick } = {}) {
+// Name tag with the attendee's generated avatar (an SVG string from the page) drawn left of the alias.
+function personTag(alias, svgMarkup, redraw) {
+  const size = 40, pad = 12, face = 46;
+  const c = document.createElement('canvas'); const ctx = c.getContext('2d');
+  const font = `700 ${size}px Bricolage, "Arial Black", system-ui, sans-serif`;
+  ctx.font = font;
+  const w = Math.ceil(ctx.measureText(alias).width) + pad * 3 + face, h = face + pad * 2;
+  c.width = w * 2; c.height = h * 2;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const paint = (img) => {
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+    ctx.lineWidth = 4; ctx.strokeStyle = '#141414'; ctx.strokeRect(2, 2, w - 4, h - 4);
+    if (img) ctx.drawImage(img, pad, pad, face, face);
+    ctx.font = font; ctx.fillStyle = '#141414'; ctx.textBaseline = 'middle';
+    ctx.fillText(alias, pad * 2 + face, h / 2 + 2);
+    tex.needsUpdate = true;
+  };
+  paint(null);
+  if (svgMarkup) {
+    const img = new Image();
+    img.onload = () => { paint(img); redraw(); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
+  }
+  return { tex, aspect: w / h };
+}
+
+export function mount(container, { onPick, avatarSvg } = {}) {
   const canvas = container.querySelector('canvas');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
   if (!renderer.getContext()) throw new Error('no WebGL');
@@ -146,9 +173,10 @@ export function mount(container, { onPick } = {}) {
         }
         const who = active[i];
         if (taken && who) {
-          const lbl = labelTexture(who.attendeeAlias.slice(0, 18), { size: 40, weight: 700, bg: '#ffffff', border: true, pad: 14 });
+          const alias = who.attendeeAlias.slice(0, 18);
+          const lbl = personTag(alias, avatarSvg ? avatarSvg(who.attendeeAlias) : null, frame);
           const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: lbl.tex, depthTest: false }));
-          sp.scale.set(0.34 * lbl.aspect, 0.34, 1);
+          sp.scale.set(0.4 * lbl.aspect, 0.4, 1);
           sp.position.set(ch.group.position.x, 1.62, ch.group.position.z);
           sp.renderOrder = 10; t.root.add(sp); t.tags.push(sp);
         }

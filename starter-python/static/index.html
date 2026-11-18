@@ -102,6 +102,22 @@
   .room { height: clamp(260px, 38vw, 420px); margin: 0 0 32px; background: var(--white); border: 2px solid var(--ink); box-shadow: var(--shadow);
     background-image: radial-gradient(var(--line) 1.2px, transparent 1.2px); background-size: 22px 22px; }
   .room canvas { display: block; width: 100%; height: 100%; }
+  .person { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .avatar { flex: none; display: block; }
+  .who-btn { all: unset; cursor: pointer; font: 800 22px/1.1 var(--font-h); letter-spacing: -0.01em; overflow-wrap: anywhere; border-bottom: 2px solid transparent; }
+  .who-btn:hover { border-bottom-color: var(--ink); }
+  .who-btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+  dialog.profile { border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); padding: 0; width: min(28rem, calc(100vw - 32px)); background: var(--white); color: var(--ink); }
+  dialog.profile::backdrop { background: rgba(20, 20, 20, .45); }
+  .profile-head { display: flex; align-items: center; gap: 18px; padding: 24px 24px 18px; background: var(--bg); border-bottom: 2px solid var(--ink); }
+  .profile-head h2 { font-size: 34px; overflow-wrap: anywhere; }
+  .profile-head p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+  .profile-body { padding: 18px 24px 24px; }
+  .profile-body ul { list-style: none; margin: 0 0 18px; padding: 0; }
+  .profile-body li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .profile-body li:last-child { border-bottom: 0; }
+  .profile-body .sess { font-weight: 700; }
+  .profile-body .title { display: block; font-size: 13px; color: var(--muted); }
   footer { margin-top: 56px; padding-top: 16px; border-top: 2px solid var(--ink); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font: 400 12px ui-monospace, Menlo, monospace; color: var(--muted); }
   footer span { overflow-wrap: anywhere; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -165,6 +181,14 @@
     <div id="list-msg" class="msg" tabindex="-1" aria-live="polite"></div>
   </section>
 
+  <dialog class="profile" id="profile" aria-labelledby="profile-name">
+    <div class="profile-head"><span id="profile-avatar"></span><div><h2 id="profile-name"></h2><p id="profile-sub"></p></div></div>
+    <div class="profile-body">
+      <ul id="profile-list"></ul>
+      <form method="dialog"><button class="btn ghost" id="profile-close">Close</button></form>
+    </div>
+  </dialog>
+
   <footer><span id="store-info"></span></footer>
 </main>
 <script>
@@ -173,6 +197,60 @@ const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
 const newKey = () => 'ui-' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 let selected = null;
+let titles = {};
+
+// Generated avatar: deterministic from the alias, drawn as SVG. No photos, no uploads, no personal data.
+const SVG = 'http://www.w3.org/2000/svg';
+const PALETTE = ['#ffd21f', '#e3262f', '#1e7bff', '#2db665', '#ff8a1e', '#c6f01e', '#fff6da', '#b9a7ff'];
+function hash(str) { let h = 2166136261; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function avatar(alias, size) {
+  const h = hash(alias);
+  const pick = (n, shift) => (h >>> shift) % n;
+  const bg = PALETTE[pick(PALETTE.length, 0)];
+  const dark = ['#e3262f', '#1e7bff'].includes(bg);
+  const ink = '#141414', face = dark ? '#ffffff' : ink;
+  const s = document.createElementNS(SVG, 'svg');
+  s.setAttribute('viewBox', '0 0 64 64'); s.setAttribute('width', size); s.setAttribute('height', size);
+  s.setAttribute('class', 'avatar'); s.setAttribute('aria-hidden', 'true');
+  const add = (tag, attrs) => { const n = document.createElementNS(SVG, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); s.append(n); return n; };
+  add('circle', { cx: 32, cy: 32, r: 30, fill: bg, stroke: ink, 'stroke-width': 3 });
+  const eyeY = 26 + pick(4, 3), gap = 9 + pick(4, 5);
+  const eyes = pick(4, 7);
+  for (const x of [32 - gap, 32 + gap]) {
+    if (eyes === 0) add('circle', { cx: x, cy: eyeY, r: 3.2, fill: face });
+    else if (eyes === 1) add('rect', { x: x - 4, y: eyeY - 1.5, width: 8, height: 3.5, rx: 1.5, fill: face });
+    else if (eyes === 2) add('path', { d: `M${x - 4} ${eyeY + 1} q4 -6 8 0`, fill: 'none', stroke: face, 'stroke-width': 3, 'stroke-linecap': 'round' });
+    else { add('circle', { cx: x, cy: eyeY, r: 5, fill: '#fff', stroke: ink, 'stroke-width': 2 }); add('circle', { cx: x + 1, cy: eyeY + 1, r: 2, fill: ink }); }
+  }
+  const mouth = pick(4, 9), my = 42 + pick(3, 11);
+  const m = { fill: 'none', stroke: face, 'stroke-width': 3, 'stroke-linecap': 'round' };
+  if (mouth === 0) add('path', { d: `M22 ${my} q10 9 20 0`, ...m });
+  else if (mouth === 1) add('path', { d: `M24 ${my + 2} h16`, ...m });
+  else if (mouth === 2) add('circle', { cx: 32, cy: my + 2, r: 4, fill: face });
+  else add('path', { d: `M22 ${my} q5 5 10 0 q5 5 10 0`, ...m });
+  if (pick(3, 13) === 0) add('path', { d: 'M14 16 q18 -16 36 0', fill: 'none', stroke: ink, 'stroke-width': 5, 'stroke-linecap': 'round' });
+  return s;
+}
+
+async function openProfile(alias) {
+  const dlg = $('profile');
+  $('profile-avatar').replaceChildren(avatar(alias, 84));
+  $('profile-name').textContent = alias;
+  $('profile-sub').textContent = 'Loading…';
+  $('profile-list').replaceChildren();
+  if (!dlg.open) dlg.showModal();
+  const r = await api('GET', '/reservations?alias=' + encodeURIComponent(alias));
+  if (!r.ok || !r.data || !Array.isArray(r.data.reservations)) { $('profile-sub').textContent = errorText(r.data, r.status); return; }
+  const rows = r.data.reservations;
+  const active = rows.filter((x) => x.status === 'active').length;
+  $('profile-sub').textContent = active + ' active · ' + (rows.length - active) + ' cancelled';
+  $('profile-list').replaceChildren(...rows.map((res) => {
+    const li = el('li'); const left = el('div');
+    left.append(el('span', 'sess', res.sessionId), el('span', 'title', titles[res.sessionId] || ''));
+    li.append(left, el('span', 'tag ' + res.status, res.status));
+    return li;
+  }));
+}
 
 function show(node, text, kind) {
   node.textContent = text; node.className = 'msg' + (text ? ' ' + kind : '');
@@ -223,6 +301,7 @@ async function loadSessions() {
     seg.push(lab);
   }
   lastSessions = r.data.sessions;
+  titles = Object.fromEntries(r.data.sessions.map((s) => [s.id, s.title]));
   box.replaceChildren(...cards);
   const focusedSeg = document.activeElement && document.activeElement.name === 'sessionId';
   $('session-seg').replaceChildren(...seg);
@@ -240,7 +319,12 @@ async function loadReservations() {
   if (!r.data.reservations.length) { list.replaceChildren(el('li', 'empty', alias ? 'No reservations for “' + alias + '”.' : 'No reservations yet.')); return; }
   list.replaceChildren(...r.data.reservations.slice().reverse().map((res) => {
     const li = el('li');
-    const who = el('div'); who.append(el('span', 'who', res.attendeeAlias), el('code', 'rid', res.id));
+    const who = el('div', 'person');
+    const name = el('button', 'who-btn', res.attendeeAlias); name.type = 'button';
+    name.setAttribute('aria-label', 'Open profile for ' + res.attendeeAlias);
+    name.addEventListener('click', () => openProfile(res.attendeeAlias));
+    const text = el('div'); text.style.minWidth = '0'; text.append(name, el('code', 'rid', res.id));
+    who.append(avatar(res.attendeeAlias, 44), text);
     const meta = el('div', 'meta');
     meta.append(el('span', 'tag', res.sessionId), el('span', 'tag ' + res.status, res.status));
     const act = el('div', 'act');
@@ -328,7 +412,7 @@ refresh();
     const mod = await import('/room.js');
     const holder = $('room');
     holder.hidden = false;
-    room = mod.mount(holder, { onPick: (id) => {
+    room = mod.mount(holder, { avatarSvg: (alias) => { const s = avatar(alias, 64); s.setAttribute('xmlns', SVG); return new XMLSerializer().serializeToString(s); }, onPick: (id) => {
       selected = id;
       const radio = $('session-seg').querySelector('input[value="' + CSS.escape(id) + '"]');
       if (radio) radio.checked = true;
