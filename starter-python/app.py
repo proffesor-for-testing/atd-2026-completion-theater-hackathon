@@ -6,6 +6,7 @@ Run --reset explicitly before serving. Only this marked fixture store is reset.
 import argparse
 import json
 import os
+import threading
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from socketserver import TCPServer
@@ -21,6 +22,7 @@ MARKER = 'session-seat-desk-disposable-fixture-v1'
 
 
 STATE_FILE = 'state.json'
+RESERVATION_LOCK = threading.Lock()  # serialises capacity check and save
 
 
 def active_count(state, session_id):
@@ -47,6 +49,7 @@ def read_sessions():
 
 class LoopbackHTTPServer(ThreadingHTTPServer):
     """Local transport does not need HTTPServer's reverse-DNS lookup."""
+    request_queue_size = 64  # default backlog of 5 resets simultaneous connections
     def server_bind(self):
         TCPServer.server_bind(self)
         self.server_name = 'localhost'
@@ -109,14 +112,15 @@ class Handler(BaseHTTPRequestHandler):
             record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
                                                   body['attendeeAlias'], body['requestKey'])
             state_file = DATA / STATE_FILE
-            try:
-                updated = reservations.add_active_reservation(
-                    storage.load_state(state_file), record)
-            except reservations.CapacityFull as error:
-                self.json_response(409, {'error': {'code': 'CAPACITY_FULL',
-                    'message': str(error)}})
-                return
-            storage.save_state(state_file, updated)
+            with RESERVATION_LOCK:
+                try:
+                    updated = reservations.add_active_reservation(
+                        storage.load_state(state_file), record)
+                except reservations.CapacityFull as error:
+                    self.json_response(409, {'error': {'code': 'CAPACITY_FULL',
+                        'message': str(error)}})
+                    return
+                storage.save_state(state_file, updated)
             self.json_response(201, record)
         else:
             self.json_response(501, {'error': {'code': 'NOT_IMPLEMENTED',
