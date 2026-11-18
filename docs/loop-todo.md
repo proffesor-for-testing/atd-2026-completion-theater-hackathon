@@ -27,7 +27,7 @@ Steps are in order. Each one is a single test-first cycle.
 - [x] AC-06: cancelling an active reservation releases exactly one seat
 - [ ] AC-06: repeated cancellation reports cancelled and leaves the count unchanged
 - [ ] AC-06: replaying the original request after cancellation returns the cancelled record and does not reactivate it
-- [ ] AC-07: active and cancelled reservations survive a restart without reset, read back over HTTP
+- [x] AC-07: active and cancelled reservations survive a restart without reset, read back over HTTP (covered by user ruling; the restart probe passed before any code change)
 - [ ] AC-08: unknown session, blank alias, missing key, malformed JSON and unknown cancel return non-success with a clear error and no state change
 - [ ] AC-08: the process stays available after each rejected request
 - [ ] AC-08 (left after blank alias): unknown session and missing `requestKey` return a 4xx JSON error instead of dropping the connection
