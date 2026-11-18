@@ -61,3 +61,17 @@ def test_missing_file_loads_empty_state_and_logs_warning(tmp_path, caplog):
         r.levelno == logging.WARNING and "absent.json" in r.getMessage()
         for r in caplog.records
     )
+
+
+def test_corrupt_file_raises_and_logs_error(tmp_path, caplog):
+    path = tmp_path / "state.json"
+    path.write_text("{not valid json", encoding="utf-8")
+
+    with caplog.at_level(logging.ERROR, logger="storage"):
+        with pytest.raises(ValueError):
+            storage.load_state(path)
+
+    assert any(
+        r.levelno == logging.ERROR and "state.json" in r.getMessage()
+        for r in caplog.records
+    )
