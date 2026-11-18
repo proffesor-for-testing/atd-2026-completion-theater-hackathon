@@ -17,6 +17,7 @@ Steps are in order. Each one is a single test-first cycle.
 - [ ] AC-02: UI counts agree with `GET /sessions` (acceptance test on the page)
 - [x] AC-03: `POST /reservations` creates an active reservation for CT-101 with a stable ID
 - [x] AC-03: `GET /reservations/{id}` returns the stored record, or 4xx if unknown
+- [ ] AC-03: `GET /reservations/{id}` with an unknown ID returns a 4xx JSON error (test not yet written)
 - [ ] AC-03: after a reservation, remaining CT-101 seats drop to 1 in `GET /sessions` and the UI
 - [ ] AC-04a: a third distinct CT-101 request is rejected with a clear capacity error and creates no reservation
 - [ ] AC-04b: concurrent distinct requests on a one-seat state give exactly one success and active count 2
