@@ -83,6 +83,15 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 self.json_response(500, {'error': {'code': 'STATE_CORRUPT',
                     'message': 'State file %s is corrupt; refusing to load it' % (DATA / STATE_FILE)}})
+        elif self.path.startswith('/reservations/'):
+            reservation_id = self.path[len('/reservations/'):]
+            record = reservations.find_reservation(
+                storage.load_state(DATA / STATE_FILE), reservation_id)
+            if record is None:
+                self.json_response(404, {'error': {'code': 'NOT_FOUND',
+                    'message': 'No reservation with ID %s' % reservation_id}})
+            else:
+                self.json_response(200, record)
         elif self.path == '/':
             payload = ui.render_page(read_sessions()).encode('utf-8')
             self.send_response(200)
