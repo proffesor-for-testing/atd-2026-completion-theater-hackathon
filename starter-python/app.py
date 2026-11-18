@@ -12,9 +12,25 @@ import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from socketserver import TCPServer
 
+import ui
+
 BASE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('DATA_DIR', str(BASE / '.state'))).resolve()
 MARKER = 'session-seat-desk-disposable-fixture-v1'
+
+
+def read_sessions():
+    """Session records in API shape, read from the fixture database."""
+    with closing(sqlite3.connect(DATA / 'seats.db')) as connection:
+        rows = connection.execute('''
+            SELECT s.id, s.title, s.capacity, COUNT(r.id)
+            FROM sessions s
+            LEFT JOIN reservations r ON r.session_id = s.id AND r.status = 'active'
+            GROUP BY s.id ORDER BY s.id
+        ''').fetchall()
+    return [{'id': sid, 'title': title, 'capacity': capacity, 'activeCount': active,
+             'remainingSeats': capacity - active}
+            for sid, title, capacity, active in rows]
 
 
 class LoopbackHTTPServer(ThreadingHTTPServer):
@@ -61,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/health':
             self.json_response(200, {'status': 'scaffold', 'implemented': False})
         elif self.path == '/':
-            payload = (BASE / 'static' / 'index.html').read_bytes()
+            payload = ui.render_page(read_sessions()).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(payload)))
