@@ -22,3 +22,18 @@ def test_blank_alias_is_rejected_without_state_change(app, alias):
     assert 400 <= status < 500, f"blank alias was accepted: {status}: {body}"
     assert isinstance(body, dict) and body.get("error"), f"no error message: {body}"
     assert remaining_seats(app) == before
+
+
+@pytest.mark.parametrize("body", [
+    {"sessionId": "XX-999", "attendeeAlias": "Ada", "requestKey": "K1"},
+    {"sessionId": "CT-101", "attendeeAlias": "Ada"},
+], ids=["unknown-session", "missing-request-key"])
+def test_unknown_session_or_missing_key_is_rejected_without_state_change(app, body):
+    app.start()
+    before = remaining_seats(app)
+
+    status, reply = app.request("POST", "/reservations", json_body=body)
+
+    assert 400 <= status < 500, f"invalid request was not a 4xx: {status}: {reply}"
+    assert isinstance(reply, dict) and reply.get("error"), f"no error message: {reply}"
+    assert remaining_seats(app) == before
