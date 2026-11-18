@@ -30,6 +30,14 @@ def find_replay(state: dict, record: dict) -> dict | None:
                  and r["attendeeAlias"] == record["attendeeAlias"]), None)
 
 
+def find_key_conflict(state: dict, record: dict) -> dict | None:
+    """Pure: a stored reservation with the same request key but a different session or alias, or None."""
+    return next((r for r in state["reservations"]
+                 if r["requestKey"] == record["requestKey"]
+                 and (r["sessionId"] != record["sessionId"]
+                      or r["attendeeAlias"] != record["attendeeAlias"])), None)
+
+
 class CapacityFull(Exception):
     """Raised when a session has no remaining seats."""
 

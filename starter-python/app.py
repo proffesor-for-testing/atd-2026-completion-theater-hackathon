@@ -120,6 +120,11 @@ class Handler(BaseHTTPRequestHandler):
                 if replay is not None:
                     self.json_response(200, replay)
                     return
+                if reservations.find_key_conflict(state, record) is not None:
+                    self.json_response(409, {'error': {'code': 'KEY_CONFLICT',
+                        'message': 'Request key %s was already used for another reservation'
+                                   % record['requestKey']}})
+                    return
                 try:
                     updated = reservations.add_active_reservation(state, record)
                 except reservations.CapacityFull as error:
