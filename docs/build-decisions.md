@@ -22,7 +22,8 @@ All app code, tests and experiments live in `starter-python/` (the declared app 
 
 - `tests/unit/test_<module>.py`: unit tests, one file per code module, same name. Marked `unit` automatically.
 - `tests/acceptance/test_ac<nn>_<topic>.py`: one file per PRD criterion, run against a real process. Marked `acceptance` automatically.
-- `tests/support/`: the harness (`fixture_app.py`), shared by acceptance tests.
+- `tests/integration/test_<flow>.py`: integration tests. They join two or more pieces (for example storage, the app process, and the error path to the UI) and check the seam between them. Marked `integration` automatically. Name files by the flow they cover, not by a module.
+- `tests/support/`: the harness (`fixture_app.py`), shared by acceptance and integration tests.
 - `experiments/exp_<question>.py`: explorations. Not collected by pytest.
 
 Commands, from `starter-python/`:
@@ -30,6 +31,7 @@ Commands, from `starter-python/`:
 - All tests: `../.venv/bin/python -m pytest`
 - Unit only: `../.venv/bin/python -m pytest tests/unit`
 - Acceptance only: `../.venv/bin/python -m pytest -m acceptance`
+- Integration only: `../.venv/bin/python -m pytest -m integration`
 
 ## Locations
 
@@ -38,5 +40,7 @@ Commands, from `starter-python/`:
 - Fixture state: under `DATA_DIR` only. Never the repository root or a real database.
 
 ## Open
+
+- The state file is JSON (`storage.py`), but the `app.py` scaffold still creates and reads SQLite (`seats.db`). The integration tests assume `DATA_DIR/state.json`. Decide which one the app uses before the reservation endpoints are built.
 
 - Whether the UI check is automated (for example, a simple HTML and DOM test) or manual with recorded steps.
