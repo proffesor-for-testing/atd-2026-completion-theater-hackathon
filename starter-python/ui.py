@@ -6,6 +6,16 @@ activeCount, remainingSeats.
 import html
 
 RESERVATION_SCRIPT = """
+async function refreshCounts() {
+  const response = await fetch('/sessions');
+  const data = await response.json();
+  const list = document.getElementById('seat-counts');
+  list.replaceChildren(...data.sessions.map((s) => {
+    const item = document.createElement('li');
+    item.textContent = `${s.id} ${s.title}: ${s.remainingSeats} remaining of ${s.capacity}`;
+    return item;
+  }));
+}
 const form = document.getElementById('reservation-form');
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -19,7 +29,9 @@ form.addEventListener('submit', async (event) => {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
   });
+  await refreshCounts();
 });
+refreshCounts();
 """
 
 
@@ -58,7 +70,7 @@ def render_page(sessions: list[dict]) -> str:
         "<title>Session Seat Desk</title>\n"
         "<main><h1>Session Seat Desk</h1>\n"
         "<h2>Sessions</h2>\n"
-        f"<ul>{items}</ul>"
+        f'<ul id="seat-counts">{items}</ul>'
         "<h2>Reserve a seat</h2>"
         f"{reservation_form(sessions)}"
         f"<script>{RESERVATION_SCRIPT}</script></main></html>\n"

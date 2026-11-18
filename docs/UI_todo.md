@@ -4,12 +4,12 @@ Work through these in order. Each UI step is a test-first cycle: write a failing
 
 ## Needs a ruling first
 
-- [ ] Rule on AC-09 (visible error messages in the UI). Items 11 and 12 stay blocked until then.
+- [x] Rule on AC-09 (visible error messages in the UI). Ruled 'unblock them' (loop-questions.md); items 11 and 12 are open.
 
 ## UI build (test-first, one commit per step)
 
 - [x] Reservation form (session, alias, request key) that posts to `POST /reservations`
-- [ ] Seat counts load from `GET /sessions` and refresh after each action
+- [x] Seat counts load from `GET /sessions` and refresh after each action
 - [ ] Cancel control per reservation, posting to `/reservations/{id}/cancel`
 - [ ] AC-02: UI counts agree with `GET /sessions` (acceptance test on the page)
 - [ ] AC-03: remaining CT-101 seats drop to 1 in both `/sessions` and the UI
