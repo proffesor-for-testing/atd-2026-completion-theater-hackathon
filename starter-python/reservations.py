@@ -62,3 +62,15 @@ def add_active_reservation(state: dict, record: dict) -> dict:
     if active >= session["capacity"]:
         raise CapacityFull(f"No remaining seats in {record['sessionId']}")
     return add_reservation(state, record)
+
+
+def request_error(state: dict, body: dict) -> dict | None:
+    """Pure: the 400 error body for an invalid reservation request, or None if it is valid."""
+    if not any(s["id"] == body.get("sessionId") for s in state["sessions"]):
+        return {"error": {"code": "UNKNOWN_SESSION",
+                          "message": f"No session with ID {body.get('sessionId')}"}}
+    key = body.get("requestKey")
+    if not isinstance(key, str) or key.strip() == "":
+        return {"error": {"code": "INVALID_REQUEST_KEY",
+                          "message": "Request key must be a non-empty string"}}
+    return None

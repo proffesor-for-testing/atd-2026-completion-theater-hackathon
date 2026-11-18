@@ -128,11 +128,15 @@ class Handler(BaseHTTPRequestHandler):
                 self.json_response(400, {'error': {'code': 'INVALID_ALIAS',
                     'message': 'Attendee alias must not be blank'}})
                 return
-            record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
-                                                  body['attendeeAlias'], body['requestKey'])
             state_file = DATA / STATE_FILE
             with RESERVATION_LOCK:
                 state = storage.load_state(state_file)
+                error = reservations.request_error(state, body)
+                if error is not None:
+                    self.json_response(400, error)
+                    return
+                record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
+                                                      body['attendeeAlias'], body['requestKey'])
                 replay = reservations.find_replay(state, record)
                 if replay is not None:
                     self.json_response(200, replay)

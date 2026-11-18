@@ -30,7 +30,7 @@ Steps are in order. Each one is a single test-first cycle.
 - [x] AC-07: active and cancelled reservations survive a restart without reset, read back over HTTP (covered by user ruling; the restart probe passed before any code change)
 - [ ] AC-08: unknown session, blank alias, missing key, malformed JSON and unknown cancel return non-success with a clear error and no state change
 - [ ] AC-08: the process stays available after each rejected request
-- [ ] AC-08 (left after blank alias): unknown session and missing `requestKey` return a 4xx JSON error instead of dropping the connection
+- [x] AC-08 (left after blank alias): unknown session and missing `requestKey` return a 4xx JSON error instead of dropping the connection
 - [x] Reject blank or whitespace-only aliases and trim before comparing (domain rule)
 - [ ] Reservation IDs and request keys are unique across sessions (domain rule)
 - [ ] (blocked: needs a ruling on AC-09 first) AC-09: a failed action or storage problem shows a visible error in the UI, dismissed by the user or replaced by the next success
