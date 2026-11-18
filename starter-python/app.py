@@ -76,6 +76,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
             self.json_response(200, {'status': 'scaffold', 'implemented': False})
+        elif self.path == '/sessions':
+            self.json_response(200, {'sessions': read_sessions()})
         elif self.path == '/':
             payload = ui.render_page(read_sessions()).encode('utf-8')
             self.send_response(200)
