@@ -1,8 +1,433 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Session Seat Desk: starter scaffold</title>
-<style>body{font:1.1rem system-ui;max-width:48rem;margin:3rem auto;padding:0 1rem;line-height:1.6}code{background:#eef1f6;padding:.2rem}h1{color:#101760}</style>
-<main><h1>Session Seat Desk</h1><p><strong>Scaffold only. The reservation app is not implemented.</strong></p>
-<p>Your team will build session readback, booking, request replay, cancellation, durable state and the UI described in the PRD.</p>
-<p>Replace this page with a labelled, keyboard-usable interface that shows actual API state. Do not turn sample text into a success claim.</p>
-<p>The health endpoint confirms only that this server is listening. It does not establish any acceptance criterion.</p></main></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Seat Desk</title>
+<style>
+  :root{--bg:#f4f5f9;--panel:#fff;--fg:#141922;--muted:#5a6375;--line:#dfe3eb;--accent:#2546c9;--accent-soft:#e9eeff;--on-accent:#fff;
+    --ok:#0b6b2b;--ok-soft:#e4f4e9;--bad:#a4161a;--bad-soft:#fde8e8;--focus:#f0a500;
+    --shadow:0 1px 2px rgba(20,25,34,.05),0 6px 20px rgba(20,25,34,.06)}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1218;--panel:#171b24;--fg:#e8ebf2;--muted:#a3abbb;--line:#2b3140;--accent:#8ea4ff;
+    --accent-soft:#1e2640;--on-accent:#0d1020;--ok:#6fd394;--ok-soft:#13281b;--bad:#ff8f8f;--bad-soft:#2e1517;--shadow:none}}
+  *{box-sizing:border-box}
+  html{scroll-padding-bottom:8rem} @media (max-width:560px){html{scroll-padding-bottom:11rem}}
+  body{margin:0;font:1rem/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg)}
+  .wrap{max-width:76rem;margin:0 auto;padding:1.25rem 1rem 6rem}
+  .top{display:flex;flex-wrap:wrap;gap:1rem 2rem;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+  h1{margin:0;font-size:1.55rem;letter-spacing:-.01em} .sub{margin:0;color:var(--muted);font-size:.92rem}
+  .tools{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center}
+  .search input{width:18rem;max-width:100%}
+  .toggle{display:flex;gap:.4rem;align-items:center;font-size:.92rem;color:var(--muted);cursor:pointer;margin:0}
+  .toggle input{width:1.05rem;height:1.05rem;accent-color:var(--accent)}
+  .sync{display:flex;align-items:center;gap:.45rem;color:var(--muted);font-size:.88rem}
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);flex:none;box-shadow:0 0 0 3px var(--ok-soft)}
+  .sync.stale{color:var(--bad)} .sync.stale .dot{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+  .boards{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))}
+  .board,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;box-shadow:var(--shadow);min-width:0}
+  .stale-data .board{border:2px dashed var(--bad)}
+  .board-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}
+  .board h2{margin:0;font-size:1.15rem} .board h2 span{display:block;font-size:.95rem;font-weight:400;color:var(--muted)}
+  .bar{height:.45rem;border-radius:999px;background:var(--line);overflow:hidden;margin:.85rem 0 .3rem}
+  .bar span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+  .bar.full span{background:var(--bad)}
+  .meter{margin:0 0 .85rem;font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .seats{list-style:none;margin:0;padding:0;display:grid;gap:.6rem;grid-template-columns:repeat(auto-fill,minmax(min(100%,14rem),1fr))}
+  .seat{border-radius:10px;min-height:4.4rem;min-width:0}
+  .chip{display:flex;gap:.6rem;align-items:center;border:1px solid var(--line);padding:.55rem .6rem;background:var(--panel)}
+  .chip.match{outline:3px solid var(--accent);outline-offset:1px} .chip.dim{border-style:dashed;background:var(--bg)} .chip.dim .avatar{background:var(--line);color:var(--fg)}
+  .avatar{width:2.1rem;height:2.1rem;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;flex:none}
+  .who{min-width:0;flex:1} .who strong{display:block;overflow-wrap:anywhere}
+  .who small{display:block;color:var(--muted);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .confirm{grid-column:1/-1;border:2px solid var(--bad);background:var(--bad-soft);padding:.6rem;display:grid;gap:.5rem}
+  .confirm p{margin:0;color:var(--bad);font-weight:600}
+  .open-seat{border:2px dashed var(--line);display:grid;place-items:center;color:var(--muted);font-size:.9rem}
+  .add{width:100%;height:100%;min-height:4.4rem;border:2px dashed var(--accent);background:transparent;color:var(--accent);font-weight:700;border-radius:10px}
+  .add:hover{background:var(--accent-soft)}
+  .slot-form{grid-column:1/-1;border:2px solid var(--accent);background:var(--accent-soft);padding:.8rem}
+  .slot-form form{display:grid;gap:.55rem}
+  .full-note{grid-column:1/-1;color:var(--muted);font-size:.9rem;padding:.5rem 0}
+  label{font-weight:600;display:block;margin-bottom:.15rem}
+  input[type=text],input[type=search]{font:inherit;width:100%;padding:.5rem .65rem;border:1px solid #8a93a3;border-radius:8px;background:var(--panel);color:var(--fg)}
+  [aria-invalid="true"]{border-color:var(--bad)!important;border-width:2px!important}
+  button{font:inherit;padding:.5rem .9rem;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);cursor:pointer;white-space:nowrap}
+  button.ghost{background:transparent;color:var(--accent)} button.small{padding:.25rem .6rem;font-size:.88rem}
+  button.warn{background:transparent;color:var(--bad);border-color:var(--bad)} button.danger{background:var(--bad);border-color:var(--bad);color:var(--on-accent)}
+  button:disabled{opacity:.6;cursor:progress}
+  :focus-visible{outline:3px solid var(--focus)!important;outline-offset:2px}
+  .row{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap} .grow{flex:1;min-width:8rem}
+  .hint{color:var(--muted);font-size:.86rem}
+  .msg{border-radius:8px;padding:.55rem .75rem;margin:.6rem 0 0;font-size:.93rem;overflow-wrap:anywhere}
+  .msg:empty{display:none} .msg.err{background:var(--bad-soft);color:var(--bad)}
+  .pill{display:inline-block;font-size:.78rem;font-weight:700;padding:.1rem .55rem;border-radius:999px;white-space:nowrap}
+  .pill.full{background:var(--bad-soft);color:var(--bad)} .pill.open{background:var(--ok-soft);color:var(--ok)}
+  .pill.active{background:var(--ok-soft);color:var(--ok)} .pill.cancelled{background:var(--line);color:var(--fg)}
+  details>summary{cursor:pointer} .past{margin-top:.85rem;font-size:.92rem} .past summary{color:var(--muted)}
+  .past ul{margin:.4rem 0 0;padding-left:1.1rem;color:var(--muted);overflow-wrap:anywhere}
+  .records{margin-top:1.25rem} .records summary h2{display:inline;font-size:1.05rem}
+  .table-wrap{overflow-x:auto;max-width:100%;margin-top:.8rem}
+  table{border-collapse:collapse;width:100%;font-size:.93rem}
+  th,td{border-bottom:1px solid var(--line);padding:.5rem .45rem;text-align:left;vertical-align:middle}
+  th{font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);white-space:nowrap}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;overflow-wrap:anywhere}
+  .flash{animation:flash 2.2s ease-out} @keyframes flash{from{box-shadow:0 0 0 4px var(--accent)}to{box-shadow:0 0 0 0 transparent}}
+  .toast-wrap{position:fixed;left:0;right:0;bottom:1rem;display:flex;justify-content:center;padding:0 1rem;pointer-events:none;z-index:5}
+  .toast{pointer-events:auto;max-width:40rem;width:100%;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;border-radius:12px;padding:.75rem 1rem;
+    background:var(--fg);color:var(--bg);box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  .toast:empty{display:none} .toast .t{flex:1;min-width:12rem;overflow-wrap:anywhere}
+  .toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  @media (prefers-reduced-motion:reduce){.flash{animation:none}.bar span{transition:none}}
+  @media (max-width:560px){.wrap{padding:1rem .75rem 8rem}.board,.panel{padding:.9rem}.search,.tools{width:100%}.search input{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div><h1>Session Seat Desk</h1><p class="sub">Completion Theater workshops · fictional attendees only</p></div>
+  <div class="tools">
+    <div class="search"><label for="q" class="sr">Find attendee by alias, request key or reservation ID</label>
+      <input type="search" id="q" placeholder="Find attendee…  ( / )" autocomplete="off" aria-describedby="q-count"></div>
+    <label class="toggle"><input type="checkbox" id="show-keys"> Show request keys</label>
+    <div class="sync" id="sync"><span class="dot" aria-hidden="true"></span><span id="sync-text">Connecting…</span></div>
+    <button type="button" class="ghost small" id="refresh">Refresh</button>
+  </div>
+</header>
+<main aria-describedby="sr-note">
+  <p class="sr" id="sr-note">Every number on this page is read from the local API (GET /sessions, GET /reservations) and re-checked every few seconds. A booking is only shown after the server confirms it. Book with Add attendee inside a session; cancel with the Cancel button on an attendee's seat.</p>
+  <p class="sr" id="q-count" aria-live="polite"></p>
+  <span class="sr" id="sync-live" role="status" aria-live="polite"></span>
+  <div id="load-err" class="msg err" role="alert" style="margin:0 0 1rem"></div>
+  <div class="boards" id="boards"><p class="hint">Loading sessions…</p></div>
+
+  <section class="panel records" aria-labelledby="records-h">
+    <details id="records-details">
+      <summary><h2 id="records-h">All records</h2> <span class="hint" id="records-sum">— IDs, request keys, cancelled bookings and lookup</span></summary>
+      <div class="table-wrap" role="region" aria-label="All reservation records, scrollable" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">Alias</th><th scope="col">Session</th><th scope="col">Status</th><th scope="col">Reservation ID</th><th scope="col">Request key</th></tr></thead>
+          <tbody id="res-body"></tbody>
+        </table>
+      </div>
+      <form id="lookup-form" class="row" novalidate style="margin-top:1rem">
+        <div class="grow"><label for="lookup-id">Look up a reservation by ID</label><input type="text" id="lookup-id" autocomplete="off"></div>
+        <button type="submit">Look up</button>
+      </form>
+      <div id="lookup-out" class="msg" role="status" aria-live="polite"></div>
+      <div id="lookup-err" class="msg err" role="alert"></div>
+    </details>
+  </section>
+  <div class="toast-wrap"><div id="toast" class="toast" role="status" aria-live="polite"></div></div>
+</main>
+</div>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const POLL_MS = 5000;
+  // Mirrors the server: whitespace, control and zero-width/BOM characters count as blank.
+  const BLANK = /^[\s\p{Cc}\p{Cf}\p{Z}]*$/u;
+  const newKey = () => 'K-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2));
+  const freshDraft = (alias) => ({alias: alias || '', key: newKey(), error: '', field: ''});
+  const state = {sessions: [], reservations: [], sig: '', online: true, syncedAt: null, flash: new Set(),
+    open: null, draft: freshDraft(), confirm: null, boardErr: {}, busy: false, showKeys: false, pastOpen: new Set(), back: null, fullErr: new Set()};
+  try { state.showKeys = localStorage.getItem('ssd-show-keys') === '1'; } catch (e) { /* storage unavailable */ }
+
+  // Builds DOM nodes; all text goes through textContent, never HTML parsing.
+  function el(tag, props, ...kids) {
+    const node = document.createElement(tag);
+    Object.entries(props || {}).forEach(([k, v]) => {
+      if (v === undefined || v === null || v === false) return;
+      if (k === 'text') node.textContent = String(v);
+      else if (k === 'class') node.className = v;
+      else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+      else node.setAttribute(k, v === true ? '' : String(v));
+    });
+    kids.flat().forEach((kid) => { if (kid !== null && kid !== undefined && kid !== false) node.append(kid); });
+    return node;
+  }
+
+  async function api(method, path, body) {
+    let res;
+    try {
+      res = await fetch(path, {method, cache: 'no-store', headers: body === undefined ? {} : {'Content-Type': 'application/json'},
+        body: body === undefined ? undefined : JSON.stringify(body)});
+    } catch (e) { throw new Error('Cannot reach the server (' + e.message + ').'); }
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* non-JSON */ }
+    if (!res.ok) {
+      const err = data && data.error;
+      const msg = typeof err === 'string' ? err : (err && err.message) || ('HTTP ' + res.status);
+      const error = new Error(msg + (err && err.code ? ' (' + err.code + ')' : ''));
+      error.code = err && err.code;
+      throw error;
+    }
+    return {status: res.status, data};
+  }
+
+  const query = () => $('q').value.trim().toLowerCase();
+  const matches = (r, q) => !q || [r.attendeeAlias, r.requestKey, r.id].some((v) => v.toLowerCase().includes(q));
+  const focusKey = (key) => { const n = document.querySelector('[data-focus="' + CSS.escape(key) + '"]'); if (n) { n.focus(); return true; } return false; };
+  function markFlash(id) { state.flash.add(id); setTimeout(() => state.flash.delete(id), 2500); }
+
+  // Re-renders replace nodes; restore focus (and caret) to the equivalent control afterwards.
+  function render() {
+    const a = document.activeElement;
+    const key = a && a.dataset && a.dataset.focus;
+    const caret = a && typeof a.selectionStart === 'number' ? [a.selectionStart, a.selectionEnd] : null;
+    renderBoards(); renderRecords();
+    if (key && focusKey(key) && caret) { try { document.activeElement.setSelectionRange(caret[0], caret[1]); } catch (e) { /* n/a */ } }
+  }
+
+  function renderBoards() {
+    const q = query();
+    $('boards').replaceChildren(...state.sessions.map((s) => {
+      const active = state.reservations.filter((r) => r.sessionId === s.id && r.status === 'active');
+      const cancelled = state.reservations.filter((r) => r.sessionId === s.id && r.status === 'cancelled');
+      const full = s.remainingSeats <= 0;
+      const seats = active.map((r) => seatChip(r, s, q));
+      if (full) seats.push(el('li', {class: 'full-note', text: 'Full — cancel a booking to free a seat.'}));
+      for (let i = 0; i < s.remainingSeats; i++) {
+        if (i === 0 && state.open === s.id) seats.push(slotForm(s));
+        else if (i === 0) seats.push(el('li', {class: 'seat'}, el('button', {type: 'button', class: 'add', 'data-focus': 'add:' + s.id,
+          'aria-label': 'Add attendee to ' + s.id + ', ' + s.remainingSeats + ' open', text: '+ Add attendee', onclick: () => openSlot(s.id)})));
+        else seats.push(el('li', {class: 'seat open-seat', 'aria-hidden': 'true', text: 'Open seat'}));
+      }
+      const pct = s.capacity ? Math.min(100, Math.round(100 * s.activeCount / s.capacity)) : 100;
+      return el('section', {class: 'board', 'data-session-id': s.id, 'aria-labelledby': 'h-' + s.id},
+        el('div', {class: 'board-head'},
+          el('h2', {id: 'h-' + s.id, tabindex: '-1'}, s.id, el('span', {text: s.title})),
+          el('span', {class: 'pill ' + (full ? 'full' : 'open'), text: full ? 'Full' : s.remainingSeats + ' open'})),
+        el('div', {class: 'bar' + (full ? ' full' : ''), 'aria-hidden': 'true'}, el('span', {style: 'width:' + pct + '%'})),
+        el('p', {class: 'meter', 'data-meter': s.id, text: s.activeCount + ' of ' + s.capacity + ' seats taken · ' + s.remainingSeats + ' remaining'}),
+        el('ul', {class: 'seats', 'aria-label': 'Seats in ' + s.id}, seats),
+        el('div', {class: 'msg err', role: 'alert', id: 'err-' + s.id, tabindex: '-1', text: state.boardErr[s.id] || ''}),
+        cancelled.length ? el('details', {class: 'past', open: state.pastOpen.has(s.id),
+            ontoggle: (e) => { if (e.target.open) state.pastOpen.add(s.id); else state.pastOpen.delete(s.id); }},
+          el('summary', {'data-focus': 'past:' + s.id, text: 'Cancelled (' + cancelled.length + ')'}),
+          el('ul', {}, cancelled.map((r) => el('li', {text: r.attendeeAlias + (state.showKeys ? ' · key ' + r.requestKey : '') + ' · ' + r.id})))) : null);
+    }));
+  }
+
+  function seatChip(r, s, q) {
+    if (state.confirm === r.id) {
+      return el('li', {class: 'seat confirm', 'data-reservation-id': r.id},
+        el('p', {text: 'Release ' + r.attendeeAlias + '’s seat in ' + s.id + '?'}),
+        el('div', {class: 'row'},
+          el('button', {type: 'button', class: 'danger small', 'data-focus': 'confirm:' + r.id, text: 'Yes, release seat',
+            onclick: (e) => cancel(r, e.currentTarget)}),
+          el('button', {type: 'button', class: 'ghost small', 'data-focus': 'keep:' + r.id, text: 'Keep booking',
+            onclick: () => { state.confirm = null; render(); focusKey('cancel:' + r.id); }})));
+    }
+    const hit = q && matches(r, q);
+    return el('li', {class: 'seat chip' + (q ? (hit ? ' match' : ' dim') : '') + (state.flash.has(r.id) ? ' flash' : ''), 'data-reservation-id': r.id},
+      el('span', {class: 'avatar', 'aria-hidden': 'true', text: (Array.from(r.attendeeAlias)[0] || '?').toUpperCase()}),
+      el('span', {class: 'who'}, el('strong', {text: r.attendeeAlias, title: r.attendeeAlias}),
+        state.showKeys ? el('small', {text: 'key ' + r.requestKey, title: r.requestKey}) : null,
+        el('small', {text: r.id, title: 'Reservation ID ' + r.id})),
+      el('button', {type: 'button', class: 'warn small', 'data-focus': 'cancel:' + r.id, text: 'Cancel',
+        'aria-label': 'Cancel ' + r.attendeeAlias + '’s booking in ' + s.id,
+        onclick: () => { state.confirm = r.id; state.open = null; render(); focusKey('confirm:' + r.id); }}));
+  }
+
+  function slotForm(s) {
+    const d = state.draft;
+    const invalid = (f) => (d.field === f ? 'true' : 'false');
+    return el('li', {class: 'seat slot-form'},
+      el('form', {novalidate: true, onsubmit: (e) => { e.preventDefault(); book(s.id); },
+        onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeSlot(s.id); } }},
+        el('label', {for: 'alias', text: 'Attendee alias for ' + s.id}),
+        el('input', {type: 'text', id: 'alias', name: 'attendeeAlias', autocomplete: 'off', value: d.alias, 'data-focus': 'alias',
+          'aria-invalid': invalid('alias'), 'aria-describedby': 'alias-hint' + (d.field === 'alias' ? ' slot-err' : ''),
+          oninput: (e) => { d.alias = e.target.value; }}),
+        el('div', {class: 'hint', id: 'alias-hint', text: 'Fictional alias. Enter books the seat, Esc closes.'}),
+        state.showKeys ? el('div', {class: 'row'},
+          el('div', {class: 'grow'}, el('label', {for: 'key', text: 'Request key'}),
+            el('input', {type: 'text', id: 'key', name: 'requestKey', autocomplete: 'off', value: d.key, 'data-focus': 'key',
+              'aria-invalid': invalid('key'), 'aria-describedby': d.field === 'key' ? 'slot-err' : null, oninput: (e) => { d.key = e.target.value; }})),
+          el('button', {type: 'button', class: 'ghost', text: 'New key', onclick: () => { d.key = newKey(); render(); focusKey('key'); }})) : null,
+        el('div', {class: 'row'},
+          el('button', {type: 'submit', id: 'reserve-btn', 'data-focus': 'book', disabled: state.busy, text: state.busy ? 'Booking…' : 'Book seat'}),
+          el('button', {type: 'button', class: 'ghost', text: 'Close', onclick: () => closeSlot(s.id)})),
+        el('div', {class: 'msg err', id: 'slot-err', role: 'alert', text: d.error})));
+  }
+
+  function renderRecords() {
+    const q = query();
+    const all = state.reservations.slice().reverse();
+    const shown = all.filter((r) => matches(r, q));
+    $('res-body').replaceChildren(...(shown.length ? shown.map((r) => el('tr', {'data-reservation-id': r.id},
+      el('td', {}, el('strong', {text: r.attendeeAlias})), el('td', {text: r.sessionId}),
+      el('td', {}, el('span', {class: 'pill ' + r.status, text: r.status})),
+      el('td', {}, el('code', {text: r.id})), el('td', {}, el('code', {text: r.requestKey}))))
+      : [el('tr', {}, el('td', {colspan: 5, class: 'hint', text: all.length ? 'No records match the search.' : 'No reservations yet.'}))]));
+    const act = state.reservations.filter((r) => r.status === 'active').length;
+    $('records-sum').textContent = '— ' + act + ' active, ' + (state.reservations.length - act) + ' cancelled · IDs, request keys and lookup';
+    $('q-count').textContent = q ? shown.length + ' matching record' + (shown.length === 1 ? '' : 's') : '';
+  }
+
+  function renderSync(prev) {
+    if (prev !== null && prev !== state.online) {
+      $('sync-live').textContent = state.online ? 'Connection to server restored.' : 'Server unreachable. Numbers may be out of date.';
+    }
+    $('sync').classList.toggle('stale', !state.online);
+    document.querySelector('main').classList.toggle('stale-data', !state.online);
+    $('sync-text').textContent = state.online ? 'Live · checked ' + (state.syncedAt ? state.syncedAt.toLocaleTimeString() : '—') : 'Offline — retrying…';
+  }
+
+  // Only re-render when the server's data actually changed, so polling never disturbs the user.
+  let inflight = null; let lastOnline = null;
+  function refreshAll() {
+    if (inflight) return inflight;
+    inflight = (async () => {
+      try {
+        const [s, r] = await Promise.all([api('GET', '/sessions'), api('GET', '/reservations')]);
+        state.online = true; state.syncedAt = new Date();
+        const sig = JSON.stringify([s.data.sessions, r.data.reservations]);
+        if (sig !== state.sig) {
+          const before = new Map(state.reservations.map((x) => [x.id, x.status]));
+          if (state.sig) r.data.reservations.forEach((x) => { if (before.get(x.id) !== x.status) markFlash(x.id); });
+          state.sig = sig; state.sessions = s.data.sessions; state.reservations = r.data.reservations;
+          const ae = document.activeElement;
+          const errFocus = ae && ae.id && ae.id.startsWith('err-') ? ae.id.slice(4) : null;
+          state.sessions.forEach((x) => { if (x.remainingSeats > 0 && state.fullErr.delete(x.id)) delete state.boardErr[x.id]; });
+          const filled = state.open && !state.sessions.some((x) => x.id === state.open && x.remainingSeats > 0) ? state.open : null;
+          const typing = filled && document.activeElement && document.activeElement.closest && document.activeElement.closest('.slot-form');
+          if (filled) {
+            const typed = state.draft.alias.trim();
+            state.fullErr.add(filled);
+            state.boardErr[filled] = filled + ' just filled up' + (typed ? ' — ' + typed + ' was not booked.' : '.') + ' Cancel a booking to free a seat.';
+            state.open = null;
+          }
+          render();
+          if (typing) $('err-' + filled).focus();
+          else if (errFocus && !state.boardErr[errFocus] && !focusKey('add:' + errFocus) && $('h-' + errFocus)) $('h-' + errFocus).focus();
+        }
+        $('load-err').textContent = '';
+      } catch (e) {
+        state.online = false;
+        $('load-err').textContent = 'Could not load state: ' + e.message + ' Numbers shown may be out of date.';
+      } finally {
+        renderSync(lastOnline); lastOnline = state.online; inflight = null;
+      }
+    })();
+    return inflight;
+  }
+  const forceRefresh = async () => { if (inflight) await inflight; state.sig = ''; return refreshAll(); };
+
+  function toast(text, action) {
+    const t = $('toast');
+    const parts = [el('span', {class: 't', text})];
+    if (action) parts.push(el('button', {type: 'button', class: 'small', text: action.label, onclick: () => { t.replaceChildren(); action.run(); }}));
+    parts.push(el('button', {type: 'button', class: 'small', text: 'Dismiss', 'aria-label': 'Dismiss message', onclick: () => {
+      t.replaceChildren();
+      const back = state.back;
+      if (!(back && focusKey(back.key)) && back && $('h-' + back.session)) $('h-' + back.session).focus();
+      else if (!back) $('q').focus();
+    }}));
+    t.replaceChildren(...parts);
+  }
+
+  function openSlot(sessionId, alias) {
+    const s = state.sessions.find((x) => x.id === sessionId);
+    if (!s || s.remainingSeats <= 0) { toast(sessionId + ' is full — cancel a booking there first.'); return; }
+    delete state.boardErr[sessionId]; state.fullErr.delete(sessionId);
+    state.open = sessionId; state.confirm = null; state.draft = freshDraft(alias);
+    render(); focusKey('alias');
+  }
+  function closeSlot(sessionId) { state.open = null; render(); if (!focusKey('add:' + sessionId)) $('h-' + sessionId).focus(); }
+
+  async function book(sessionId) {
+    const d = state.draft;
+    d.error = ''; d.field = '';
+    if (BLANK.test(d.alias)) { d.error = 'Attendee alias must not be blank.'; d.field = 'alias'; render(); focusKey('alias'); return; }
+    if (!d.key.trim()) { d.error = 'Request key is required and must not be blank.'; d.field = 'key'; render(); focusKey('key'); return; }
+    state.busy = true; $('toast').replaceChildren(); render();
+    try {
+      const {status, data} = await api('POST', '/reservations', {sessionId, attendeeAlias: d.alias, requestKey: d.key});
+      markFlash(data.id);
+      if (status === 201) {
+        toast('Reserved: ' + data.attendeeAlias + ' in ' + data.sessionId + ' — ID ' + data.id + ', status ' + data.status + '.');
+        state.draft = freshDraft();
+      } else {
+        toast('Existing reservation returned for this key: ' + data.attendeeAlias + ' in ' + data.sessionId + ' — ID ' + data.id
+          + ', status ' + data.status + '. No extra seat was used.');
+      }
+    } catch (e) {
+      d.error = 'Booking rejected: ' + e.message + (e.code === 'REQUEST_KEY_CONFLICT' ? ' Use “New key” for a separate booking.' : '')
+        + (e.code === 'CAPACITY_FULL' ? ' Cancel a booking to free a seat.' : '');
+      d.field = e.code === 'REQUEST_KEY_CONFLICT' && state.showKeys ? 'key' : 'alias';
+    }
+    state.busy = false;
+    await forceRefresh();
+    if (state.open !== sessionId && d.error) { state.boardErr[sessionId] = d.error; state.fullErr.add(sessionId); } // form closed (session full): keep the reason visible
+    render();
+    state.back = {session: sessionId, key: state.open === sessionId ? 'alias' : 'add:' + sessionId};
+    if (state.open === sessionId) focusKey(d.field === 'key' ? 'key' : 'alias');
+    else if (state.boardErr[sessionId]) $('err-' + sessionId).focus();
+    else $('h-' + sessionId).focus();
+  }
+
+  async function cancel(r, button) {
+    button.disabled = true;
+    delete state.boardErr[r.sessionId];
+    try {
+      const {data} = await api('POST', '/reservations/' + encodeURIComponent(r.id) + '/cancel', {});
+      markFlash(data.id);
+      toast('Released ' + data.attendeeAlias + '’s seat in ' + data.sessionId + ' — reservation ' + data.id + ' is now ' + data.status + '.',
+        {label: 'Book ' + data.attendeeAlias + ' again', run: () => openSlot(data.sessionId, data.attendeeAlias)});
+    } catch (e) {
+      state.boardErr[r.sessionId] = 'Cancel failed: ' + e.message;
+    }
+    state.confirm = null;
+    await forceRefresh();
+    render();
+    state.back = {session: r.sessionId, key: 'add:' + r.sessionId};
+    if (state.boardErr[r.sessionId]) $('err-' + r.sessionId).focus();
+    else if (!focusKey('add:' + r.sessionId)) $('h-' + r.sessionId).focus();
+  }
+
+  $('lookup-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('lookup-out').textContent = ''; $('lookup-err').textContent = '';
+    const id = $('lookup-id').value.trim();
+    if (!id) { $('lookup-err').textContent = 'Enter a reservation ID.'; return; }
+    try {
+      const {data} = await api('GET', '/reservations/' + encodeURIComponent(id));
+      $('lookup-out').textContent = data.id + ': ' + data.attendeeAlias + ' in ' + data.sessionId + ', key ' + data.requestKey + ', status ' + data.status + '.';
+    } catch (e) { $('lookup-err').textContent = 'Lookup failed: ' + e.message; }
+  });
+
+  // Keep the page's bottom space (and scroll padding) at least as tall as the toast, so focus is never hidden under it.
+  const reserveToastSpace = () => {
+    const h = $('toast').childElementCount ? $('toast').getBoundingClientRect().height + 32 : 0;
+    document.querySelector('.wrap').style.paddingBottom = h ? h + 24 + 'px' : '';
+    document.documentElement.style.scrollPaddingBottom = h ? h + 'px' : '';
+  };
+  if (window.ResizeObserver) new ResizeObserver(reserveToastSpace).observe($('toast'));
+  new MutationObserver(reserveToastSpace).observe($('toast'), {childList: true});
+
+  $('q').addEventListener('input', render);
+  $('show-keys').checked = state.showKeys;
+  $('show-keys').addEventListener('change', (e) => {
+    state.showKeys = e.target.checked;
+    try { localStorage.setItem('ssd-show-keys', state.showKeys ? '1' : '0'); } catch (err) { /* ignore */ }
+    render();
+  });
+  $('refresh').addEventListener('click', forceRefresh);
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    const typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    if (e.key === '/' && !typing) { e.preventDefault(); $('q').focus(); }
+    if (e.key === 'Escape' && state.confirm && t && t.closest && t.closest('[data-reservation-id="' + CSS.escape(state.confirm) + '"]')) {
+      const id = state.confirm; state.confirm = null; render(); focusKey('cancel:' + id);
+    }
+  });
+  setInterval(() => { if (!document.hidden) refreshAll(); }, POLL_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
+  // Everything shown comes from api('GET', '/sessions') and api('GET', '/reservations').
+  refreshAll();
+})();
+</script>
+</body>
+</html>
