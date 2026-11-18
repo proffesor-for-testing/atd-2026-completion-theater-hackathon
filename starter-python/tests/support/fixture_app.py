@@ -15,7 +15,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-APP_DIR = Path(__file__).resolve().parents[2]
+import app as app_module  # starter-python/app.py; importable via pytest pythonpath
+
+APP_DIR = Path(app_module.__file__).resolve().parent
 READY_TIMEOUT_SECONDS = 10.0
 STOP_TIMEOUT_SECONDS = 5.0
 
@@ -52,16 +54,8 @@ class FixtureApp:
         return env
 
     def reset(self) -> None:
-        """Explicit fixture reset. Only ever touches self.data_dir."""
-        subprocess.run(
-            [sys.executable, "app.py", "--reset"],
-            cwd=self.app_dir,
-            env=self._env(),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+        """Explicit fixture reset, in-process. Only ever touches self.data_dir."""
+        app_module.reset_fixture(self.data_dir)
 
     def start(self) -> None:
         if self.process is not None and self.process.poll() is None:

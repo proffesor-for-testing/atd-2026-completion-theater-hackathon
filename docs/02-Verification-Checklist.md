@@ -33,6 +33,7 @@ Use a fresh fixture reset at the start of each scenario. Do not reset inside a s
 | AC-06 | Reset fixture. Create CT-101 / Ada / K1 and save its ID. Cancel it. Repeat cancellation. Remaining becomes 2 and stays 2. Replay original K1 create request: same cancelled ID, still remaining 2. | __________________ |
 | AC-07 | Reset. Make K1 and K2 in CT-101; cancel K1. Capture IDs, statuses, active 1, remaining 1. Stop process. Restart without reset. Fresh HTTP and UI readback must match. Record state path and PID/process restart. | __________________ |
 | AC-08 | Reset. Try each invalid-input case in PRD. Capture every rejection and before/after counts for both sessions. GET /sessions must still work. | __________________ |
+| AC-09 (proposed, pending ruling) | Trigger a rejected reservation in the UI, then make the state file unreadable or corrupt and retry an action. Each failure shows a visible, non-empty error in the page (screenshot). Message clears after dismissal or a later success. Afterwards, UI actions still work and counts match GET /sessions. | __________________ |
 
 ## Five completion theater checks
 

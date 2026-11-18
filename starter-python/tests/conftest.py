@@ -1,6 +1,7 @@
 """Shared fixtures and automatic markers.
 
-Markers come from the folder: tests/unit -> unit, tests/acceptance -> acceptance.
+Markers come from the folder: tests/unit -> unit, tests/acceptance -> acceptance,
+tests/integration -> integration.
 """
 import pytest
 
@@ -14,6 +15,8 @@ def pytest_collection_modifyitems(items):
             item.add_marker(pytest.mark.unit)
         elif "acceptance" in parts:
             item.add_marker(pytest.mark.acceptance)
+        elif "integration" in parts:
+            item.add_marker(pytest.mark.integration)
 
 
 @pytest.fixture

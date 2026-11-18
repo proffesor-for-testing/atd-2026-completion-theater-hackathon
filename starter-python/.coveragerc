@@ -1,0 +1,9 @@
+# Coverage for the app and harness. Subprocess runs of app.py write parallel data files
+# that pytest-cov combines at the end of the run.
+[run]
+source = .
+parallel = True
+omit =
+    tests/*
+    experiments/*
+    .pytest_cache/*

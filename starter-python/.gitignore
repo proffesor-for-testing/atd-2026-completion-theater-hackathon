@@ -1,0 +1,5 @@
+# Coverage output from pytest-cov (run data, combined data, HTML)
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/

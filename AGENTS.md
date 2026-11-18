@@ -11,3 +11,9 @@ I'm going to build test-first: write one test. Run test to check it fails. Commi
 Functions should be pure as far as possible.
 
 Tests should be paramaterisable if possible, with shared fixtures 
+
+To run the tests, activate the venv and `python -m pytest` from `starter-python`
+
+The file handling will raise events to report problems to the user.
+
+The user interface will respond to events.
