@@ -37,3 +37,10 @@ def test_reservation_form_posts_to_reservations():
 
     assert "<form" in page
     assert "/reservations" in page
+
+
+def test_page_reloads_seat_counts_from_sessions_and_has_a_counts_container():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert 'id="seat-counts"' in page
+    assert "fetch('/sessions')" in page
