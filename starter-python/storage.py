@@ -43,4 +43,8 @@ def load_state(path: Path) -> dict:
     if not path.exists():
         log.warning("State file %s is missing; starting from an empty state", path)
         return {"sessions": [], "reservations": []}
-    return decode_state(path.read_text(encoding="utf-8"))
+    try:
+        return decode_state(path.read_text(encoding="utf-8"))
+    except ValueError:
+        log.error("State file %s is corrupt; refusing to load it", path)
+        raise
