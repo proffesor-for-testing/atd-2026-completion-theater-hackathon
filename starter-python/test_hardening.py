@@ -28,10 +28,13 @@ class HardeningTests(unittest.TestCase):
         subprocess.run([sys.executable, 'app.py', '--reset'], cwd=APP_DIR, env=env, check=True, capture_output=True)
         cls.proc = subprocess.Popen([sys.executable, 'app.py'], cwd=APP_DIR, env=env,
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        for _ in range(100):
+        deadline = time.time() + 15  # generous: a loaded laptop can start Python slowly
+        while True:
             try:
-                urllib.request.urlopen(f'http://127.0.0.1:{cls.port}/sessions', timeout=1); break
+                urllib.request.urlopen(f'http://127.0.0.1:{cls.port}/sessions', timeout=2); break
             except OSError:
+                if time.time() > deadline:
+                    raise RuntimeError('server did not become ready within 15 s')
                 time.sleep(0.05)
 
     @classmethod
@@ -112,6 +115,14 @@ class HardeningTests(unittest.TestCase):
         status = int(head.split(b'\r\n')[0].split()[1])
         self.assertTrue(400 <= status < 500, head)
         self.assertTrue(json.loads(body)['error'])
+
+    def test_fonts_served_only_from_whitelist(self):
+        status, ctype, body = self.raw('GET', '/fonts/bricolage.woff2')
+        self.assertEqual((status, ctype), (200, 'font/woff2'))
+        self.assertGreater(len(body), 10000)
+        for path in ('/fonts/../app.py', '/fonts/%2e%2e/app.py', '/fonts/OFL.txt', '/static/fonts/dm-sans-latin.woff2'):
+            with self.subTest(path=path):
+                self.assert_rejected('GET', path)
 
     def test_unknown_path_is_json_404(self):
         self.assert_rejected('GET', '/nope')

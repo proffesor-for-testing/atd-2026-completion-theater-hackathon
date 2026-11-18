@@ -36,12 +36,16 @@ class StoreCheckTests(unittest.TestCase):
         subprocess.run([sys.executable, 'app.py', '--reset'], cwd=APP_DIR, env=self.env, check=True, capture_output=True)
         self.proc = subprocess.Popen([sys.executable, 'app.py'], cwd=APP_DIR, env=self.env,
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        for _ in range(100):
+        deadline = time.time() + 15  # generous: a loaded laptop can start Python slowly
+        while True:
             try:
                 if self.call('GET', '/sessions')[0] == 200:
                     break
             except OSError:
-                time.sleep(0.05)
+                pass
+            if time.time() > deadline:
+                self.fail('server did not become ready within 15 s')
+            time.sleep(0.05)
         # one active and one cancelled reservation
         self.active = self.call('POST', '/reservations', {'sessionId': 'CT-101', 'attendeeAlias': 'Ada', 'requestKey': 'K1'})[1]
         bob = self.call('POST', '/reservations', {'sessionId': 'CT-101', 'attendeeAlias': 'Bob', 'requestKey': 'K2'})[1]

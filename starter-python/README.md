@@ -36,6 +36,7 @@ Reset refuses to touch a `seats.db` that lacks the fixture ownership marker. Use
 | `GET /reservations/{id}` | 200 reservation | 404 `UNKNOWN_RESERVATION` |
 | `POST /reservations/{id}/cancel` `{}` | 200 cancelled record (repeat cancellations return the same record) | 404 `UNKNOWN_RESERVATION`, 400 if the body is not a JSON object |
 | `GET /reservations?alias=Ada` (extra) | 200 `{"reservations":[...]}`; used by the UI's "find booking" box | none |
+| `GET /fonts/bricolage.woff2`, `/fonts/dm-sans.woff2` | the UI's two bundled fonts (exact whitelist; SIL OFL 1.1, see `static/fonts/OFL.txt`), so the UI needs no network | 404 for anything else |
 | `GET /health` (extra) | 200 store path, server pid, number of audited changes, last audit hash | 503 `STORE_MISSING` |
 | Any other method or path | none | JSON 404 / 405; no HTML error pages anywhere |
 
@@ -51,7 +52,7 @@ Order of decisions in `POST /reservations`: validate input, then session exists 
 | --- | --- | --- |
 | `test_acceptance.py` (24 tests) | Black-box tests for AC-02 to AC-08: starts the real server as a subprocess, uses a fresh `DATA_DIR` per test, runs real restarts, 5 race batches of 10 threads, and reads SQLite directly | Written by a separate agent (AQE `qe-tdd-specialist`) instructed to work from the PRD only, without reading `app.py`. The brief is in the sidecar; independence is a process claim, not something this commit can prove |
 | `test_store_check.py` (6 tests) | `app.py --check` passes on a clean store and **fails** on 5 kinds of tampering: reactivated booking, ghost row, overbooking, alias edited in place, rewritten audit history | Negative controls for the checker itself |
-| `test_hardening.py` (11 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines, size limits, PRD-literal request keys | Each was reported as a defect by the reviewers before the fix (their reports are in the sidecar) |
+| `test_hardening.py` (12 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines, size limits, PRD-literal request keys | Each was reported as a defect by the reviewers before the fix (their reports are in the sidecar) |
 | `tools/verify.py` (organizer) | API challenges for AC-02 to AC-08, including 10 concurrent batches and a real process restart | Organizer code, unmodified |
 
 Coverage was **not measured**, and we make no coverage claim. The sensitivity of the tests is shown with mutation testing (see the evidence manifest), not with a percentage.

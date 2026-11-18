@@ -275,6 +275,8 @@ def check_store():
 
 # ---------- HTTP ----------
 
+# Exact whitelist: the UI's two bundled fonts (SIL Open Font License), never arbitrary files.
+FONTS = {'/fonts/bricolage.woff2': 'bricolage-grotesque-latin.woff2', '/fonts/dm-sans.woff2': 'dm-sans-latin.woff2'}
 ID_PATH = re.compile(r'^/reservations/([^/]+)$')
 CANCEL_PATH = re.compile(r'^/reservations/([^/]+)/cancel$')
 
@@ -347,6 +349,8 @@ class Handler(BaseHTTPRequestHandler):
             if method == 'GET':
                 if path in ('/', '/index.html'):
                     return self.send_static()
+                if path in FONTS:
+                    return self.send_font(FONTS[path])
                 if path == '/sessions':
                     with closing(connect()) as connection:
                         return self.send_json(200, {'sessions': list_sessions(connection)})
@@ -384,6 +388,15 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as error:  # never leak a stack trace or an HTML page
             self.log_message('unexpected error: %r', error)
             self.send_error_json(ApiError(500, 'INTERNAL', 'Unexpected server error.'))
+
+    def send_font(self, name):
+        payload = (BASE / 'static' / 'fonts' / name).read_bytes()
+        self.send_response(200)
+        self.send_header('Content-Type', 'font/woff2')
+        self.send_header('Content-Length', str(len(payload)))
+        self.send_header('Cache-Control', 'max-age=86400')
+        self.end_headers()
+        self.wfile.write(payload)
 
     def send_static(self):
         payload = (BASE / 'static' / 'index.html').read_bytes()
