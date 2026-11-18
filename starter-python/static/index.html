@@ -1,8 +1,571 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Session Seat Desk: starter scaffold</title>
-<style>body{font:1.1rem system-ui;max-width:48rem;margin:3rem auto;padding:0 1rem;line-height:1.6}code{background:#eef1f6;padding:.2rem}h1{color:#101760}</style>
-<main><h1>Session Seat Desk</h1><p><strong>Scaffold only. The reservation app is not implemented.</strong></p>
-<p>Your team will build session readback, booking, request replay, cancellation, durable state and the UI described in the PRD.</p>
-<p>Replace this page with a labelled, keyboard-usable interface that shows actual API state. Do not turn sample text into a success claim.</p>
-<p>The health endpoint confirms only that this server is listening. It does not establish any acceptance criterion.</p></main></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Seat Desk</title>
+<style>
+  :root {
+    --bg:#f4f6fc; --panel:rgba(255,255,255,.82); --panel-2:#ffffff; --line:rgba(80,90,160,.18); --ink:#14162e; --muted:#5b6285;
+    --accent:#7c3aed; --accent-2:#0891b2; --ok:#059669; --warn:#b45309; --err:#e11d48;
+    --field:#ffffff; --btn:#ffffff; --header:rgba(255,255,255,.78); --pre:#134e4a; --rid:#6d28d9; --h1-from:#1e1b4b;
+    --grid:rgba(80,90,160,.08); --stat:#f6f7fd; --rcpt:#fbfbff; --shadow:0 10px 30px rgba(40,50,120,.08);
+    --tint-a:rgba(124,58,237,.16); --tint-b:rgba(8,145,178,.12); --tint-c:rgba(225,29,72,.07);
+    --glow-a: 0 0 0 1px rgba(124,58,237,.3), 0 0 18px rgba(124,58,237,.15);
+    --glow-c: 0 0 0 1px rgba(8,145,178,.35), 0 0 16px rgba(8,145,178,.15);
+    --mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg:#05060d; --panel:rgba(14,18,36,.72); --panel-2:rgba(22,28,54,.75); --line:rgba(120,140,255,.18); --ink:#e8ecff; --muted:#8e97c4;
+    --accent:#8b5cf6; --accent-2:#22d3ee; --ok:#34f5a5; --warn:#fbbf24; --err:#ff5c8a;
+    --field:rgba(5,6,13,.7); --btn:rgba(30,36,70,.8); --header:rgba(8,10,22,.7); --pre:#b9f6e5; --rid:#c4b5fd; --h1-from:#ffffff;
+    --grid:rgba(120,140,255,.06); --stat:rgba(5,6,13,.55); --rcpt:rgba(5,6,13,.6); --shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 10px 40px rgba(0,0,0,.35);
+    --tint-a:rgba(139,92,246,.28); --tint-b:rgba(34,211,238,.18); --tint-c:rgba(255,92,138,.12);
+    --glow-a: 0 0 0 1px rgba(139,92,246,.35), 0 0 24px rgba(139,92,246,.25);
+    --glow-c: 0 0 0 1px rgba(34,211,238,.4), 0 0 22px rgba(34,211,238,.25);
+    color-scheme: dark;
+  }
+  :root[data-accent="ocean"] { --accent:#2563eb; --accent-2:#0d9488; --rid:#1d4ed8; --tint-a:rgba(37,99,235,.16); --tint-b:rgba(13,148,136,.14); }
+  :root[data-accent="sunset"] { --accent:#ea580c; --accent-2:#db2777; --rid:#c2410c; --tint-a:rgba(234,88,12,.15); --tint-b:rgba(219,39,119,.12); }
+  :root[data-accent="forest"] { --accent:#15803d; --accent-2:#0e7490; --rid:#166534; --tint-a:rgba(21,128,61,.15); --tint-b:rgba(14,116,144,.12); }
+  :root[data-theme="dark"][data-accent="ocean"] { --accent:#60a5fa; --accent-2:#2dd4bf; --rid:#93c5fd; }
+  :root[data-theme="dark"][data-accent="sunset"] { --accent:#fb923c; --accent-2:#f472b6; --rid:#fdba74; }
+  :root[data-theme="dark"][data-accent="forest"] { --accent:#4ade80; --accent-2:#22d3ee; --rid:#86efac; }
+  * { box-sizing: border-box; }
+  body { margin:0; color:var(--ink); font:15px/1.5 var(--sans); min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 10% -10%, var(--tint-a), transparent 60%),
+      radial-gradient(800px 500px at 110% 10%, var(--tint-b), transparent 60%),
+      radial-gradient(700px 400px at 50% 120%, var(--tint-c), transparent 60%),
+      var(--bg); background-attachment: fixed; }
+  body::before { content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 44px 44px; mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 80%); animation: drift 30s linear infinite; }
+  @keyframes drift { to { background-position: 44px 44px, 44px 44px; } }
+  header, main { position: relative; z-index: 1; }
+  code, .mono { font-family: var(--mono); font-size: .86em; }
+  :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; border-radius: 6px; box-shadow: var(--glow-c); }
+  button { font: inherit; cursor: pointer; border-radius: 9px; border: 1px solid var(--line);
+           background: var(--btn); color: var(--ink); padding: .45rem .8rem; transition: all .15s; }
+  button:hover { border-color: var(--accent-2); box-shadow: var(--glow-c); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+  button.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: 0; color: #fff; font-weight: 700;
+                   letter-spacing: .02em; box-shadow: 0 6px 24px rgba(139,92,246,.45); }
+  button.primary:hover { box-shadow: 0 6px 32px rgba(34,211,238,.55); }
+  button.danger { color: var(--err); border-color: rgba(255,92,138,.35); }
+  button.danger:hover { box-shadow: 0 0 18px rgba(255,92,138,.35); border-color: var(--err); }
+  button.ghost { background: transparent; }
+  button.sm { padding: .22rem .6rem; font-size: .8rem; }
+
+  header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;
+           padding: 1rem 1.5rem; border-bottom:1px solid var(--line); background: var(--header); backdrop-filter: blur(12px); }
+  .brand { display:flex; align-items:center; gap:.9rem; }
+  .logo { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; font: 800 1rem var(--mono); color:#fff;
+          background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent)); animation: spin 8s linear infinite; position: relative; }
+  .logo span { position:absolute; inset:3px; border-radius:9px; background: #0b0d1c; display:grid; place-items:center; animation: spin 8s linear infinite reverse; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { font-size:1.25rem; margin:0; letter-spacing:-.01em; font-weight: 800;
+       background: linear-gradient(90deg, var(--h1-from), var(--accent) 55%, var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h1 .slash { font-family: var(--mono); font-weight: 500; font-size: .85rem; color: var(--accent-2); -webkit-text-fill-color: var(--accent-2); margin-left: .4rem; }
+  .tag { color:var(--muted); font-size:.82rem; }
+  .pill { display:inline-flex; align-items:center; gap:.45rem; padding:.3rem .75rem; border-radius:999px; font-family: var(--mono);
+          border:1px solid var(--line); font-size:.75rem; color:var(--muted); background: var(--panel-2); max-width: 100%; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex: none; }
+  .dot.live { background: var(--ok); animation: pulse 1.8s infinite; }
+  .dot.down { background: var(--err); }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(52,245,165,.7);} 70% { box-shadow:0 0 0 9px transparent;} 100% { box-shadow:0 0 0 0 transparent;} }
+
+  main { display:grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 430px); gap:1.25rem; padding:1.25rem 1.5rem 2rem; max-width: 1440px; margin: 0 auto; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border:1px solid var(--line); border-radius: 16px; padding: 1.1rem 1.2rem; backdrop-filter: blur(10px);
+           box-shadow: var(--shadow); }
+  h2 { font: 700 1.05rem var(--sans); letter-spacing:-.01em; color:var(--ink); margin:0 0 .9rem;
+       display:flex; justify-content:space-between; align-items:center; gap: .5rem; }
+  .stack { display:grid; gap:1.25rem; align-content: start; }
+
+  .sessions { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .card { background: var(--panel-2); border:1px solid var(--line); border-radius:14px; padding:1rem; display:grid; gap:.85rem;
+          transition: border-color .25s, box-shadow .25s; position: relative; overflow: hidden; }
+  .card::after { content:""; position:absolute; inset:0; pointer-events:none;
+                 background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.05) 50%, transparent 60%); transform: translateX(-100%); animation: sheen 6s ease-in-out infinite; }
+  @keyframes sheen { 60%,100% { transform: translateX(100%); } }
+  .card.selected { border-color: var(--accent-2); box-shadow: var(--glow-c); }
+  .card.full { border-color: rgba(255,92,138,.6); box-shadow: 0 0 0 1px rgba(255,92,138,.3), 0 0 26px rgba(255,92,138,.18); }
+  .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+  .sid { font-family: var(--mono); font-size:.76rem; color: var(--accent-2); letter-spacing: .06em; }
+  .title { font-weight:700; font-size:1.05rem; }
+  .badge { text-transform: capitalize; font-family: var(--mono); font-size:.7rem; padding:.12rem .55rem; border-radius:999px; border:1px solid currentColor; white-space: nowrap; letter-spacing:.04em; }
+  .badge.active, .badge.s2 { color: var(--ok); box-shadow: 0 0 10px rgba(52,245,165,.18); }
+  .badge.cancelled { color: var(--muted); }
+  .badge.full, .badge.s4 { color: var(--err); box-shadow: 0 0 10px rgba(255,92,138,.2); }
+  .badge.open { color: var(--accent-2); }
+  .badge.s5 { color: var(--warn); }
+  .seats { display:flex; gap:.55rem; flex-wrap: wrap; }
+  .seat { width:42px; height:42px; border-radius:11px; border:1.5px dashed rgba(142,151,196,.45); display:grid; place-items:center;
+          font: .72rem var(--mono); color: var(--muted); transition: all .4s cubic-bezier(.2,.9,.3,1.4); }
+  .seat.taken { border: 0; color: #fff; font-size: 1rem; transform: scale(1.04);
+                background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 18px rgba(139,92,246,.55); }
+  .stats { display:grid; grid-template-columns: repeat(3, 1fr); gap:.45rem; margin:0; }
+  .stats div { background: var(--stat); border:1px solid var(--line); border-radius:10px; padding:.35rem .55rem; }
+  .stats dt { font: .66rem var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+  .stats dd { margin:0; font-family: var(--mono); font-size:1.25rem; font-weight:700; }
+  .card-actions { display:flex; gap:.5rem; flex-wrap: wrap; }
+
+  .invariants { margin-top: 1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:.4rem; }
+  .inv { display:flex; align-items:center; gap:.5rem; font: .76rem var(--mono); padding:.35rem .6rem; border-radius:8px;
+         border:1px solid rgba(52,245,165,.25); background: rgba(52,245,165,.06); color: var(--ink); }
+  .inv b { color: var(--ok); white-space: nowrap; }
+  .inv { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inv.bad { border-color: rgba(255,92,138,.5); background: rgba(255,92,138,.1); }
+  .inv.bad b { color: var(--err); }
+
+  form.reserve { display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:.8rem; align-items:end; }
+  @media (max-width: 760px) { form.reserve { grid-template-columns: 1fr; } }
+  .field { display:grid; gap:.3rem; }
+  label { font: 600 .82rem var(--sans); color: var(--muted); }
+  input, select { font: inherit; padding:.55rem .7rem; border-radius:9px; border:1px solid var(--line);
+                  background: var(--field); color: var(--ink); width: 100%; transition: border-color .15s, box-shadow .15s; }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: var(--glow-a); outline: none; }
+  input.mono { font-family: var(--mono); font-size: .85rem; }
+  .keyrow { display:flex; gap:.35rem; }
+  .hint { font-size:.75rem; color: var(--muted); }
+
+  .status { margin-top:.9rem; padding:.7rem .85rem; border-radius:11px; border:1px solid var(--line); font: .85rem var(--mono); min-height: 2.6rem; }
+  .status:empty { display: none; }
+  .status.ok { border-color: rgba(52,245,165,.45); background: rgba(52,245,165,.08); box-shadow: 0 0 22px rgba(52,245,165,.12); }
+  .status.err { border-color: rgba(255,92,138,.55); background: rgba(255,92,138,.1); box-shadow: 0 0 22px rgba(255,92,138,.15); }
+
+  table { width:100%; border-collapse: collapse; font-size:.88rem; }
+  th { text-align:left; font: 600 .68rem var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.1em;
+       padding:.45rem .5rem; border-bottom:1px solid var(--line); }
+  td { padding:.55rem .5rem; border-bottom:1px solid rgba(120,140,255,.08); vertical-align: middle; }
+  tbody tr:hover td { background: rgba(139,92,246,.06); }
+  tr.flash td { animation: flash 1.4s ease; }
+  @keyframes flash { from { background: rgba(34,211,238,.25); } to { background: transparent; } }
+  .rid { font-family: var(--mono); font-size:.78rem; color: var(--rid); }
+  .row-actions { display:flex; gap:.35rem; justify-content: flex-end; }
+  .empty { color: var(--muted); text-align: center; padding: 1.2rem; font-family: var(--mono); }
+  .table-wrap { overflow-x: auto; }
+
+  .receipts { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); display:flex; flex-direction: column; }
+  .log { overflow:auto; display:grid; gap:.4rem; align-content:start; flex: 1; }
+  .rcpt { border:1px solid var(--line); border-left: 3px solid var(--accent); border-radius:9px; background: var(--rcpt); animation: slide .3s ease; }
+  .rcpt:has(.s4) { border-left-color: var(--err); }
+  .rcpt:has(.s2) { border-left-color: var(--ok); }
+  @keyframes slide { from { opacity:0; transform: translateX(10px); } to { opacity:1; transform:none; } }
+  .rcpt summary { display:flex; align-items:center; gap:.5rem; padding:.42rem .6rem; cursor:pointer; font-family: var(--mono); font-size:.76rem; list-style: none; }
+  .rcpt summary::-webkit-details-marker { display:none; }
+  .rcpt .m { font-weight:700; color: var(--accent-2); width: 2.8rem; }
+  .rcpt .p { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rcpt .t { color: var(--muted); }
+  .rcpt pre { margin:0; padding:.6rem; border-top:1px solid var(--line); font: .72rem/1.45 var(--mono); color: var(--pre); white-space:pre-wrap; word-break: break-all; max-height: 240px; overflow:auto; }
+  .rcpt .rbar { display:flex; justify-content:flex-end; gap:.35rem; padding:.35rem .6rem; border-top:1px solid var(--line); }
+  .lookup { display:flex; gap:.5rem; align-items: end; }
+  .lookup .field { flex: 1; }
+  .full-row { grid-column: 1 / -1; }
+  .race-btn { display: none; }
+  body.demo .race-btn { display: inline-block; border-color: rgba(251,191,36,.5); color: var(--warn); }
+  body.demo .race-btn:hover { box-shadow: 0 0 18px rgba(251,191,36,.35); }
+  .demo-toggle { display:inline-flex; align-items:center; gap:.4rem; font-size:.74rem; color: var(--muted); }
+  .demo-toggle input { width:auto; accent-color: var(--warn); }
+  .theme-ctl { display:inline-flex; align-items:center; gap:.35rem; }
+  .theme-ctl select { width:auto; padding:.25rem .45rem; font-size:.78rem; }
+  .header-right { display:flex; gap:.8rem; align-items:center; flex-wrap: wrap; }
+  .tech-only { display: none !important; }
+  body.tech .tech-only { display: revert !important; }
+  body.tech .keyfield.tech-only, body.tech .field.tech-only { display: grid !important; }
+  body.tech aside.receipts.tech-only { display: flex !important; }
+  body.tech .invariants.tech-only { display: grid !important; }
+  body.tech .row-actions .tech-only { display: inline-block !important; }
+  body:not(.tech) td.rid { display: none; }
+  body:not(.tech) main { grid-template-columns: minmax(0, 1fr); max-width: 1000px; }
+  body:not(.tech) form.reserve { grid-template-columns: 1fr 1fr auto; }
+  @media (max-width: 760px) { body:not(.tech) form.reserve { grid-template-columns: 1fr; } }
+  .status { font-family: var(--sans) !important; font-size: .92rem !important; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><span>SD</span></div>
+    <div>
+      <h1>Session Seat Desk</h1>
+      <div class="tag">Reserve and manage workshop seats.</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="theme-ctl"><label for="theme">Theme</label>
+      <select id="theme"><option value="light">Light</option><option value="dark">Dark</option></select></span>
+    <span class="theme-ctl"><label for="accent">Accent</label>
+      <select id="accent"><option value="violet">Violet</option><option value="ocean">Ocean</option><option value="sunset">Sunset</option><option value="forest">Forest</option></select></span>
+    <label class="demo-toggle" for="tech-mode"><input type="checkbox" id="tech-mode"> Technical details</label>
+    <label class="demo-toggle tech-only" for="demo-mode"><input type="checkbox" id="demo-mode"> Demo tools (writes test bookings)</label>
+    <div class="pill" id="health" title="Connection status"><span class="dot" id="health-dot"></span><span id="health-text">Connecting…</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="stack">
+    <section class="panel" aria-labelledby="sessions-h">
+      <h2 id="sessions-h"><span>Sessions</span>
+        <span><span class="tag" id="sessions-updated"></span> <button type="button" class="sm ghost" id="refresh">↻ Refresh</button></span></h2>
+      <div class="sessions" id="sessions"></div>
+       <div class="invariants tech-only" id="invariants" aria-label="Invariant checks on the latest server readback"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="reserve-h">
+      <h2 id="reserve-h">Reserve a seat</h2>
+      <form class="reserve" id="reserve-form" novalidate>
+        <div class="field">
+          <label for="session">Session</label>
+          <select id="session" name="sessionId" required></select>
+        </div>
+        <div class="field">
+          <label for="alias">Attendee name</label>
+          <input id="alias" name="attendeeAlias" autocomplete="off" required placeholder="e.g. Ada" aria-describedby="alias-hint">
+        </div>
+        <div class="field tech-only keyfield">
+          <label for="key">Request key</label>
+          <div class="keyrow">
+            <input id="key" class="mono" name="requestKey" autocomplete="off" required aria-describedby="key-hint">
+            <button type="button" class="sm" id="new-key" title="Generate a new request key" aria-label="Generate a new request key">⟳</button>
+          </div>
+        </div>
+        <button type="submit" class="primary" id="reserve-btn">Reserve</button>
+        <div class="hint full-row"><span id="alias-hint">Use a fictional name.</span>
+          <span id="key-hint" class="tech-only">Same key = same reservation (idempotent). A fresh key is generated after each confirmed booking.</span></div>
+      </form>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="res-h">
+      <h2 id="res-h"><span>Reservations</span><span class="tag" id="res-count"></span></h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col" class="tech-only">Reservation ID</th><th scope="col">Session</th><th scope="col">Attendee</th><th scope="col" class="tech-only">Request key</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody id="res-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel tech-only" aria-labelledby="lookup-h">
+      <h2 id="lookup-h">Look up a reservation</h2>
+      <form class="lookup" id="lookup-form" novalidate>
+        <div class="field">
+          <label for="lookup-id">Reservation ID</label>
+          <input id="lookup-id" class="mono" autocomplete="off" required placeholder="res-…">
+        </div>
+        <button type="submit">GET /reservations/{id}</button>
+      </form>
+      <div class="hint" style="margin-top:.5rem">The result appears as a receipt on the right.</div>
+    </section>
+  </div>
+
+  <aside class="panel receipts tech-only" aria-labelledby="rcpt-h">
+    <h2 id="rcpt-h"><span>HTTP activity <span class="tag" id="rcpt-count"></span></span><button type="button" class="sm ghost" id="clear-log">Clear</button></h2>
+    <div class="log" id="log" aria-live="off"></div>
+  </aside>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status');
+let sessionsCache = [];
+let receiptN = 0;
+
+/* ---------- tiny DOM helper (textContent only; no HTML injection) ---------- */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null) el.append(kid.nodeType ? kid : String(kid));
+  return el;
+}
+function newKey() {
+  if (window.crypto && crypto.randomUUID) return 'ui-' + crypto.randomUUID().slice(0, 13);
+  return 'ui-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+const tech = () => document.body.classList.contains('tech');
+const titleOf = (id) => { const s = sessionsCache.find(x => x.id === id); return s ? s.title : id; };
+function show(msg, ok) { statusEl.textContent = msg; statusEl.className = 'status ' + (ok ? 'ok' : 'err'); }
+function errText(body, res) {
+  if (body && body.error) {
+    if (typeof body.error === 'string') return body.error;
+    return tech() ? body.error.code + ': ' + body.error.message : body.error.message;
+  }
+  return 'HTTP ' + res.status;
+}
+
+/* ---------- API with receipts ---------- */
+async function api(method, path, body, opts = {}) {
+  const init = { method, headers: {} };
+  if (body !== undefined) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+  const t0 = performance.now();
+  let res, data = null, text = '';
+  try {
+    res = await fetch(path, init);
+    text = await res.text();
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+  } catch (e) {
+    setHealth(false);
+    if (!opts.quiet) addReceipt(method, path, body, null, String(e), performance.now() - t0);
+    throw e;
+  }
+  if (!opts.quiet) addReceipt(method, path, body, res.status, data !== null ? data : text, performance.now() - t0);
+  return { res, data };
+}
+function curlFor(method, path, body) {
+  let c = 'curl -s -X ' + method + " 'http://" + location.host + path + "'";
+  if (body !== undefined) c += " -H 'Content-Type: application/json' -d '" + JSON.stringify(body).replace(/'/g, "'\\''") + "'";
+  return c;
+}
+function addReceipt(method, path, reqBody, status, respBody, ms) {
+  receiptN++;
+  const cls = status == null ? 's5' : 's' + String(status)[0];
+  const lines = [];
+  if (reqBody !== undefined) lines.push('→ ' + JSON.stringify(reqBody));
+  lines.push('← ' + (status == null ? 'network error' : 'HTTP ' + status));
+  lines.push(typeof respBody === 'string' ? respBody : JSON.stringify(respBody, null, 2));
+  const curl = curlFor(method, path, reqBody);
+  const copyBtn = h('button', { type: 'button', class: 'sm ghost', onclick: async (ev) => {
+      try { await navigator.clipboard.writeText(curl); ev.target.textContent = 'copied ✓'; }
+      catch (e) { ev.target.textContent = 'copy failed'; }
+      setTimeout(() => (ev.target.textContent = 'copy as curl'), 1400);
+    } }, 'copy as curl');
+  const el = h('details', { class: 'rcpt' },
+    h('summary', {},
+      h('span', { class: 'm' }, method),
+      h('span', { class: 'p', title: path }, path),
+      h('span', { class: 'badge ' + cls }, status == null ? 'ERR' : status),
+      h('span', { class: 't' }, Math.round(ms) + 'ms')),
+    h('pre', {}, lines.join('\n')),
+    h('div', { class: 'rbar' }, copyBtn));
+  const log = $('log');
+  log.prepend(el);
+  while (log.children.length > 80) log.lastChild.remove();
+  $('rcpt-count').textContent = '· ' + receiptN;
+}
+$('clear-log').addEventListener('click', () => { $('log').replaceChildren(); receiptN = 0; $('rcpt-count').textContent = ''; });
+
+/* ---------- health ---------- */
+function setHealth(ok, text) {
+  $('health-dot').className = 'dot ' + (ok ? 'live' : 'down');
+  $('health-text').textContent = text || (ok ? 'Online' : 'Offline');
+}
+async function pollHealth() {
+  try {
+    const res = await fetch('/health', { cache: 'no-store' });
+    const d = await res.json();
+    setHealth(res.ok, 'Online');
+    $('health').title = 'Server online. State file: ' + (d.stateFile || 'unknown');
+  } catch (e) { setHealth(false); }
+}
+
+/* ---------- sessions ---------- */
+async function loadSessions(quiet) {
+  const { res, data } = await api('GET', '/sessions', undefined, { quiet });
+  if (!res.ok) { show('Could not load sessions: ' + errText(data, res), false); return; }
+  sessionsCache = data.sessions;
+  const selected = $('session').value;
+  const wrap = $('sessions'); wrap.replaceChildren();
+  const select = $('session'); select.replaceChildren();
+  for (const s of data.sessions) {
+    const full = s.remainingSeats <= 0;
+    const seats = [];
+    for (let i = 0; i < s.capacity; i++) {
+      const taken = i < s.activeCount;
+      seats.push(h('div', { class: 'seat' + (taken ? ' taken' : ''), 'aria-hidden': 'true' }, taken ? '●' : i + 1));
+    }
+    const card = h('article', { class: 'card' + (full ? ' full' : '') + (s.id === selected ? ' selected' : ''), 'data-session-id': s.id, 'aria-label': s.title },
+      h('div', { class: 'card-top' },
+        h('div', {}, h('div', { class: 'sid' }, s.id), h('div', { class: 'title' }, s.title)),
+        h('span', { class: 'badge ' + (full ? 'full' : 'open') }, full ? 'Full' : 'Open')),
+      h('div', { class: 'seats', role: 'img', 'aria-label': s.activeCount + ' of ' + s.capacity + ' seats taken' }, seats),
+      h('dl', { class: 'stats' },
+        h('div', {}, h('dt', {}, 'Capacity'), h('dd', {}, s.capacity)),
+        h('div', {}, h('dt', {}, 'Active'), h('dd', {}, s.activeCount)),
+        h('div', {}, h('dt', {}, 'Remaining'), h('dd', {}, s.remainingSeats))),
+      h('div', { class: 'card-actions' },
+        h('button', { type: 'button', class: 'sm', disabled: full, onclick: () => pickSession(s.id) }, 'Book here'),
+        h('button', { type: 'button', class: 'sm race-btn', title: 'Demo tool: fire 10 simultaneous distinct bookings (aliases Racer-1…10) and verify capacity holds',
+                      onclick: (ev) => race(s, ev.target) }, '⚡ Race ×10')),
+    );
+    wrap.append(card);
+    select.append(h('option', { value: s.id }, s.title + ' (' + s.remainingSeats + ' left)'));
+  }
+  if (selected) select.value = selected;
+  $('sessions-updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  renderInvariants(data.sessions);
+}
+// Client-side consistency checks on what the server returned (they do not replace server-side tests).
+function renderInvariants(sessions) {
+  const checks = [];
+  for (const s of sessions) {
+    checks.push([s.id + '  0 ≤ active ≤ capacity', s.activeCount >= 0 && s.activeCount <= s.capacity]);
+    checks.push([s.id + '  remaining = capacity − active', s.remainingSeats === s.capacity - s.activeCount]);
+  }
+  $('invariants').replaceChildren(...checks.map(([label, ok]) =>
+    h('div', { class: 'inv' + (ok ? '' : ' bad') }, h('b', {}, ok ? '✓ HOLDS' : '✗ BROKEN'), label)));
+}
+function pickSession(id) {
+  $('session').value = id;
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('selected', c.dataset.sessionId === id));
+  $('alias').focus();
+}
+$('session').addEventListener('change', () => pickSession($('session').value));
+
+/* ---------- reservations ---------- */
+let lastIds = new Set();
+async function loadReservations(quiet, flashId) {
+  const { res, data } = await api('GET', '/reservations', undefined, { quiet });
+  if (!res.ok) { show('Could not load reservations: ' + errText(data, res), false); return; }
+  const tbody = $('res-body'); tbody.replaceChildren();
+  const rows = data.reservations.slice().reverse();
+  $('res-count').textContent = rows.filter(r => r.status === 'active').length + ' active';
+  if (!rows.length) tbody.append(h('tr', {}, h('td', { colspan: 6, class: 'empty' }, 'No reservations yet.')));
+  for (const r of rows) {
+    const actions = h('div', { class: 'row-actions' },
+      h('button', { type: 'button', class: 'sm tech-only', title: 'Re-send the original request (same key)',
+                    'aria-label': 'Replay original request for ' + r.attendeeAlias, onclick: () => replay(r) }, '↺ Replay'),
+      r.status === 'active'
+        ? h('button', { type: 'button', class: 'sm danger', 'aria-label': 'Cancel reservation for ' + r.attendeeAlias + ' in ' + r.sessionId,
+                        onclick: () => cancel(r) }, 'Cancel')
+        : null);
+    const isNew = (flashId && r.id === flashId) || (lastIds.size && !lastIds.has(r.id));
+    tbody.append(h('tr', { class: isNew ? 'flash' : '' },
+      h('td', { class: 'rid', title: r.id }, r.id.length > 16 ? r.id.slice(0, 16) + '…' : r.id),
+      h('td', { title: r.sessionId }, titleOf(r.sessionId)),
+      h('td', {}, r.attendeeAlias),
+      h('td', { class: 'mono tech-only' }, r.requestKey),
+      h('td', {}, h('span', { class: 'badge ' + r.status }, r.status)),
+      h('td', {}, actions)));
+  }
+  lastIds = new Set(rows.map(r => r.id));
+}
+async function refresh(flashId) { await Promise.all([loadSessions(true), loadReservations(true, flashId)]); }
+
+async function cancel(r) {
+  const { res, data } = await api('POST', '/reservations/' + encodeURIComponent(r.id) + '/cancel', {});
+  if (res.ok) show('Reservation for ' + data.attendeeAlias + ' cancelled. One seat released in ' + titleOf(data.sessionId) + '.' +
+                   (tech() ? ' [HTTP ' + res.status + ', ' + data.id + ', status ' + data.status + ']' : ''), true);
+  else show('Could not cancel: ' + errText(data, res) + (tech() ? ' [HTTP ' + res.status + ']' : ''), false);
+  await refresh(r.id);
+}
+async function replay(r) {
+  const before = sessionsCache.find(s => s.id === r.sessionId);
+  const { res, data } = await api('POST', '/reservations', { sessionId: r.sessionId, attendeeAlias: r.attendeeAlias, requestKey: r.requestKey });
+  await refresh(r.id);
+  const after = sessionsCache.find(s => s.id === r.sessionId);
+  if (res.ok) {
+    const same = data.id === r.id;
+    const seatsSame = before && after && before.activeCount === after.activeCount;
+    const okReplay = same && seatsSame;
+    show((okReplay
+          ? 'Request sent again. ' + data.attendeeAlias + "'s reservation came back unchanged (" + data.status + '). No extra seat was used.'
+          : 'Request sent again, but the result was unexpected. Check the HTTP activity log.') +
+         ' [HTTP ' + res.status + ', ' + data.id + ', active seats ' + (before ? before.activeCount : '?') + ' → ' + (after ? after.activeCount : '?') + ']',
+         okReplay);
+  } else show('Request sent again and rejected: ' + errText(data, res) + ' [HTTP ' + res.status + ']', false);
+}
+
+/* ---------- race demo ---------- */
+async function race(s, btn) {
+  if (!document.body.classList.contains('demo')) return;
+  btn.disabled = true;
+  const stamp = Date.now().toString(36);
+  const before = sessionsCache.find(x => x.id === s.id);
+  show('Firing 10 concurrent bookings at ' + s.id + '…', true);
+  const attempts = Array.from({ length: 10 }, (_, i) =>
+    api('POST', '/reservations', { sessionId: s.id, attendeeAlias: 'Racer-' + (i + 1), requestKey: 'race-' + stamp + '-' + i })
+      .then(r => r.res.status).catch(() => 'ERR'));
+  const statuses = await Promise.all(attempts);
+  await refresh();
+  const after = sessionsCache.find(x => x.id === s.id);
+  const tally = {};
+  statuses.forEach(st => (tally[st] = (tally[st] || 0) + 1));
+  const ok = statuses.filter(st => st === 201).length;
+  const expected = Math.max(0, before.remainingSeats);
+  const holds = after.activeCount <= after.capacity && ok === Math.min(10, expected) && after.activeCount === before.activeCount + ok;
+  const summary = Object.entries(tally).map(([k, v]) => v + '×' + k).join(', ');
+  show('Race on ' + s.id + ': ' + summary + '. Expected ' + Math.min(10, expected) + ' success(es); got ' + ok + '. Active ' + before.activeCount + '→' + after.activeCount + '/' + after.capacity + '. ' +
+       (holds ? 'Capacity invariant held.' : 'INVARIANT BROKEN — check receipts.'), holds);
+  btn.disabled = false;
+}
+
+/* ---------- reserve form ---------- */
+$('reserve-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const alias = $('alias').value, key = $('key').value;
+  if (!alias.trim()) { show('Please enter the attendee name.', false); $('alias').focus(); return; }
+  if (!key) { show('Request key is required.', false); $('key').focus(); return; }
+  $('reserve-btn').disabled = true;
+  let flash;
+  try {
+    const { res, data } = await api('POST', '/reservations', { sessionId: $('session').value, attendeeAlias: alias, requestKey: key });
+    if (res.ok) {
+      flash = data.id;
+      const plain = res.status === 200
+        ? 'This request was already processed. ' + data.attendeeAlias + ' has a ' + data.status + ' reservation in ' + titleOf(data.sessionId) + '; no new seat was used.'
+        : 'Seat reserved for ' + data.attendeeAlias + ' in ' + titleOf(data.sessionId) + '.';
+      show(plain + (tech() ? ' [HTTP ' + res.status + ', ' + data.id + ', status ' + data.status + ']' : ''), true);
+      $('alias').value = ''; $('key').value = newKey();
+    } else {
+      show('Could not reserve: ' + errText(data, res) + (tech() ? ' [HTTP ' + res.status + ']' : ''), false);
+    }
+  } catch (e) {
+    show('Network error: ' + e.message, false);
+  } finally {
+    $('reserve-btn').disabled = false;
+    await refresh(flash);
+  }
+});
+$('new-key').addEventListener('click', () => { $('key').value = newKey(); $('key').focus(); });
+
+$('lookup-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const id = $('lookup-id').value.trim();
+  if (!id) { show('Enter a reservation ID to look up.', false); return; }
+  const { res, data } = await api('GET', '/reservations/' + encodeURIComponent(id));
+  if (res.ok) show('Readback: ' + data.id + ' · ' + data.sessionId + ' · ' + data.attendeeAlias + ' · ' + data.status, true);
+  else show('Lookup failed (HTTP ' + res.status + '): ' + errText(data, res), false);
+});
+
+$('refresh').addEventListener('click', async () => {
+  await Promise.all([loadSessions(false), loadReservations(false)]);
+});
+// Theme and accent: per-viewer preference only; storage may be unavailable.
+function applyLook(theme, accent) {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.accent = accent;
+  $('theme').value = theme; $('accent').value = accent;
+  try { localStorage.setItem('ssd-look', JSON.stringify({ theme, accent })); } catch (e) {}
+}
+(function () {
+  let look = { theme: 'light', accent: 'violet' };
+  try { look = Object.assign(look, JSON.parse(localStorage.getItem('ssd-look') || '{}')); } catch (e) {}
+  if (!['light', 'dark'].includes(look.theme)) look.theme = 'light';
+  if (!['violet', 'ocean', 'sunset', 'forest'].includes(look.accent)) look.accent = 'violet';
+  applyLook(look.theme, look.accent);
+})();
+$('theme').addEventListener('change', () => applyLook($('theme').value, $('accent').value));
+$('accent').addEventListener('change', () => applyLook($('theme').value, $('accent').value));
+$('tech-mode').addEventListener('change', (ev) => {
+  document.body.classList.toggle('tech', ev.target.checked);
+  statusEl.textContent = ''; statusEl.className = 'status';
+  if (!ev.target.checked) { $('demo-mode').checked = false; document.body.classList.remove('demo'); }
+});
+$('demo-mode').addEventListener('change', (ev) => document.body.classList.toggle('demo', ev.target.checked));
+$('key').value = newKey();
+pollHealth(); setInterval(pollHealth, 5000);
+Promise.all([loadSessions(false), loadReservations(false)]);
+</script>
+</body>
+</html>
