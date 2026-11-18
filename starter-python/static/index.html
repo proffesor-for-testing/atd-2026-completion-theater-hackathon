@@ -1,8 +1,189 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Session Seat Desk: starter scaffold</title>
-<style>body{font:1.1rem system-ui;max-width:48rem;margin:3rem auto;padding:0 1rem;line-height:1.6}code{background:#eef1f6;padding:.2rem}h1{color:#101760}</style>
-<main><h1>Session Seat Desk</h1><p><strong>Scaffold only. The reservation app is not implemented.</strong></p>
-<p>Your team will build session readback, booking, request replay, cancellation, durable state and the UI described in the PRD.</p>
-<p>Replace this page with a labelled, keyboard-usable interface that shows actual API state. Do not turn sample text into a success claim.</p>
-<p>The health endpoint confirms only that this server is listening. It does not establish any acceptance criterion.</p></main></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Seat Desk</title>
+<style>
+  body{font:1rem/1.5 system-ui,sans-serif;max-width:52rem;margin:2rem auto;padding:0 1rem;color:#1b1f2a}
+  h1{color:#101760;margin-bottom:.25rem}
+  table{border-collapse:collapse;width:100%;margin:.5rem 0 1.5rem}
+  th,td{border:1px solid #b8bfd0;padding:.4rem .6rem;text-align:left}
+  th{background:#eef1f6}
+  fieldset{border:1px solid #b8bfd0;margin:0 0 1.5rem;padding:1rem}
+  label{display:block;margin:.6rem 0 .2rem;font-weight:600}
+  input,select,button{font:inherit;padding:.4rem .6rem}
+  input,select{min-width:16rem}
+  button{cursor:pointer}
+  :focus-visible{outline:3px solid #1a56db;outline-offset:2px}
+  #error{color:#8a1111;background:#fdecec;border:1px solid #d99;padding:.5rem .75rem;margin:1rem 0}
+  #error:empty{display:none}
+  #status{min-height:1.5rem}
+  #record{background:#eef1f6;padding:.5rem .75rem;margin:.5rem 0}
+  #record:empty{display:none}
+  .meta{color:#4a5160}
+</style>
+</head>
+<body>
+<main>
+  <h1>Session Seat Desk</h1>
+  <p class="meta">Local fixture app. Use fictional aliases only. Every figure below is read from the API.</p>
+
+  <div id="error" role="alert"></div>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <section aria-labelledby="sessions-h">
+    <h2 id="sessions-h">Sessions</h2>
+    <table>
+      <caption class="meta">Seats per session, as returned by GET /sessions</caption>
+      <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Capacity</th><th scope="col">Active</th><th scope="col">Remaining</th></tr></thead>
+      <tbody id="sessions"><tr><td colspan="5">Loading…</td></tr></tbody>
+    </table>
+    <button type="button" id="refresh">Refresh sessions</button>
+  </section>
+
+  <section aria-labelledby="reserve-h">
+    <h2 id="reserve-h">Reserve a seat</h2>
+    <form id="reserve-form">
+      <fieldset>
+        <legend>New reservation</legend>
+        <label for="session">Session</label>
+        <select id="session" required></select>
+        <label for="alias">Attendee alias</label>
+        <input id="alias" type="text" autocomplete="off" required>
+        <label for="key">Request key</label>
+        <input id="key" type="text" autocomplete="off" required>
+        <button type="button" id="new-key">New key</button>
+        <p><button type="submit">Reserve</button></p>
+      </fieldset>
+    </form>
+  </section>
+
+  <section aria-labelledby="lookup-h">
+    <h2 id="lookup-h">Look up or cancel a reservation</h2>
+    <form id="lookup-form">
+      <label for="rid">Reservation ID</label>
+      <input id="rid" type="text" autocomplete="off" required>
+      <button type="submit">Look up</button>
+      <button type="button" id="cancel">Cancel reservation</button>
+    </form>
+    <div id="record" aria-live="polite"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var lastRecord = null;
+
+  function newKey() { $('key').value = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random(); }
+  function showError(msg) { $('error').textContent = msg || ''; }
+  function showStatus(msg) { $('status').textContent = msg || ''; }
+
+  function api(method, path, body) {
+    var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    return fetch(path, opts).catch(function () {
+      var e = new Error('The server did not answer'); e.network = true; throw e;
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var data = null;
+        try { data = JSON.parse(text); } catch (e) { /* non-JSON */ }
+        if (!res.ok) {
+          var err = data && data.error;
+          var msg = err && (err.message || (typeof err === 'string' ? err : '')) || ('Request failed (' + res.status + ')');
+          throw new Error(msg);
+        }
+        if (data === null) throw new Error('Server returned a non-JSON response');
+        return { status: res.status, data: data };
+      });
+    });
+  }
+
+  function cell(tr, text) { var td = document.createElement('td'); td.textContent = String(text); tr.appendChild(td); }
+
+  function loadSessions() {
+    return api('GET', '/sessions').then(function (r) {
+      var list = r.data.sessions || r.data;
+      var body = $('sessions'), select = $('session'), chosen = select.value;
+      body.textContent = ''; select.textContent = '';
+      list.forEach(function (s) {
+        var tr = document.createElement('tr');
+        cell(tr, s.id); cell(tr, s.title); cell(tr, s.capacity); cell(tr, s.activeCount); cell(tr, s.remainingSeats);
+        body.appendChild(tr);
+        var opt = document.createElement('option');
+        opt.value = s.id; opt.textContent = s.id + ' — ' + s.title + ' (' + s.remainingSeats + ' left)';
+        select.appendChild(opt);
+      });
+      if (chosen) select.value = chosen;
+      return true;
+    }).catch(function (e) {
+      if (!$('error').textContent) showError('Could not load sessions: ' + e.message);
+      return false;
+    });
+  }
+
+  function renderRecord(rec) {
+    lastRecord = rec;
+    var box = $('record');
+    box.textContent = 'Reservation ' + rec.id + ': session ' + rec.sessionId + ', alias ' + rec.attendeeAlias +
+      ', key ' + rec.requestKey + ', status ' + rec.status;
+    $('rid').value = rec.id;
+  }
+
+  function clearRecord() {
+    if (lastRecord && $('rid').value === lastRecord.id) $('rid').value = '';
+    lastRecord = null; $('record').textContent = '';
+  }
+
+  $('reserve-form').addEventListener('submit', function (ev) {
+    ev.preventDefault(); showError(''); showStatus('');
+    var submit = $('reserve-form').querySelector('button[type="submit"]');
+    if (submit.disabled) return;  // one request at a time
+    submit.disabled = true; showStatus('Reserving…');
+    api('POST', '/reservations', {
+      sessionId: $('session').value, attendeeAlias: $('alias').value, requestKey: $('key').value
+    }).then(function (r) {
+      renderRecord(r.data);
+      showStatus(r.status === 201 ? 'Reservation created (status: ' + r.data.status + ').'
+                                  : 'Request key already used: returned the existing reservation (status: ' + r.data.status + ').');
+      $('alias').value = ''; newKey();  // a second click cannot quietly book another seat for the same alias
+      return loadSessions();
+    }).catch(function (e) {
+      clearRecord(); showStatus('');
+      if (e.network) showError('Could not confirm the reservation: the server did not answer, so the seat may or may not have been booked. '
+        + 'Press Reserve again WITHOUT changing the request key to find out safely.');
+      else showError('Reservation not made: ' + e.message);
+      return loadSessions();
+    }).then(function () { submit.disabled = false; });
+  });
+
+  $('lookup-form').addEventListener('submit', function (ev) {
+    ev.preventDefault(); showError(''); showStatus('');
+    api('GET', '/reservations/' + encodeURIComponent($('rid').value.trim())).then(function (r) {
+      renderRecord(r.data); showStatus('Reservation found.');
+    }).catch(function (e) { clearRecord(); showError('Lookup failed: ' + e.message); });
+  });
+
+  $('cancel').addEventListener('click', function () {
+    showError(''); showStatus('');
+    var id = $('rid').value.trim();
+    if (!id) { showError('Enter a reservation ID to cancel.'); $('rid').focus(); return; }
+    api('POST', '/reservations/' + encodeURIComponent(id) + '/cancel', {}).then(function (r) {
+      renderRecord(r.data); showStatus('Reservation is ' + r.data.status + '.'); return loadSessions();
+    }).catch(function (e) {
+      showError(e.network ? 'Cancel not confirmed: the server did not answer. Cancelling is safe to repeat: press Cancel again.'
+                          : 'Cancel failed: ' + e.message);
+    });
+  });
+
+  $('refresh').addEventListener('click', function () { showError(''); loadSessions().then(function (ok) { if (ok) showStatus('Sessions refreshed.'); }); });
+  $('new-key').addEventListener('click', newKey);
+
+  newKey();
+  loadSessions();
+})();
+</script>
+</body>
+</html>
