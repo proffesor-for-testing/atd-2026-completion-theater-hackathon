@@ -50,3 +50,22 @@ def test_malformed_json_is_rejected_without_state_change(app, raw):
     assert 400 <= status < 500, f"malformed JSON was not a 4xx: {status}: {reply}"
     assert isinstance(reply, dict) and reply.get("error"), f"no error message: {reply}"
     assert remaining_seats(app) == before
+
+
+@pytest.mark.parametrize("raw", [
+    b'{"sessionId": "CT-101", "requestKey": "K1"}',
+    b'[]',
+    b'"CT-101"',
+    b'null',
+], ids=["missing-alias", "array", "string", "null"])
+def test_body_that_is_not_a_reservation_object_is_rejected_without_state_change(app, raw):
+    app.start()
+    before = remaining_seats(app)
+
+    status, reply = app.request("POST", "/reservations", raw=raw)
+
+    assert 400 <= status < 500, f"invalid body was not a 4xx: {status}: {reply}"
+    assert isinstance(reply, dict) and reply.get("error"), f"no error message: {reply}"
+    assert remaining_seats(app) == before
+    status, _ = app.request("GET", "/sessions")
+    assert status == 200, "process did not stay available"
