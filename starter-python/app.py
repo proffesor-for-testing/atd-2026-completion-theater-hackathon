@@ -109,7 +109,20 @@ class Handler(BaseHTTPRequestHandler):
                 'message': 'Implement the PRD read endpoints in your team copy.'}})
 
     def do_POST(self):
-        if self.path == '/reservations':
+        if self.path.startswith('/reservations/') and self.path.endswith('/cancel'):
+            reservation_id = self.path[len('/reservations/'):-len('/cancel')].rstrip('/')
+            state_file = DATA / STATE_FILE
+            with RESERVATION_LOCK:
+                state = storage.load_state(state_file)
+                record = reservations.find_reservation(state, reservation_id)
+                if record is None:
+                    self.json_response(404, {'error': {'code': 'NOT_FOUND',
+                        'message': 'No reservation with ID %s' % reservation_id}})
+                    return
+                updated = reservations.cancel_reservation(state, reservation_id)
+                storage.save_state(state_file, updated)
+            self.json_response(200, reservations.find_reservation(updated, reservation_id))
+        elif self.path == '/reservations':
             body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))))
             record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
                                                   body['attendeeAlias'], body['requestKey'])

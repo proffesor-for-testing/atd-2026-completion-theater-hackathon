@@ -22,6 +22,13 @@ def find_reservation(state: dict, reservation_id: str) -> dict | None:
     return next((r for r in state["reservations"] if r["id"] == reservation_id), None)
 
 
+def cancel_reservation(state: dict, reservation_id: str) -> dict:
+    """Pure: state with the reservation marked cancelled. Other records are unchanged."""
+    return {**state, "reservations": [
+        {**r, "status": "cancelled"} if r["id"] == reservation_id else r
+        for r in state["reservations"]]}
+
+
 def find_replay(state: dict, record: dict) -> dict | None:
     """Pure: the stored reservation with the same key, session and alias as record, or None."""
     return next((r for r in state["reservations"]

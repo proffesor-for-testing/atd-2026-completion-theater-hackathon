@@ -24,7 +24,7 @@ Steps are in order. Each one is a single test-first cycle.
 - [x] AC-05: same key, session and alias returns the original reservation without using another seat
 - [x] AC-05: a replay whose alias differs only by surrounding spaces returns the original reservation
 - [x] AC-05: same key with a different session or alias returns a conflict and changes no state
-- [ ] AC-06: cancelling an active reservation releases exactly one seat
+- [x] AC-06: cancelling an active reservation releases exactly one seat
 - [ ] AC-06: repeated cancellation reports cancelled and leaves the count unchanged
 - [ ] AC-06: replaying the original request after cancellation returns the cancelled record and does not reactivate it
 - [ ] AC-07: active and cancelled reservations survive a restart without reset, read back over HTTP
