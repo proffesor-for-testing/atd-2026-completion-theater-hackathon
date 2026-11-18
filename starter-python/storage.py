@@ -5,9 +5,12 @@ os.replace, so a reader sees either the old state or the new state, never a
 partial file.
 """
 import json
+import logging
 import os
 import tempfile
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 
 def encode_state(state: dict) -> str:
@@ -36,4 +39,8 @@ def save_state(path: Path, state: dict) -> None:
 
 
 def load_state(path: Path) -> dict:
-    return decode_state(Path(path).read_text(encoding="utf-8"))
+    path = Path(path)
+    if not path.exists():
+        log.warning("State file %s is missing; starting from an empty state", path)
+        return {"sessions": [], "reservations": []}
+    return decode_state(path.read_text(encoding="utf-8"))
