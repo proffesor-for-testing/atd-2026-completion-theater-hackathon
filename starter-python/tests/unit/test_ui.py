@@ -66,3 +66,9 @@ def test_page_script_shows_the_api_error_message_when_an_action_fails():
 
     assert "error.message" in page
     assert "!response.ok" in page
+
+
+def test_page_links_an_external_stylesheet_instead_of_bare_html():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert '<link rel="stylesheet" href="/static/style.css">' in page
