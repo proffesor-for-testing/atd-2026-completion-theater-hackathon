@@ -44,3 +44,11 @@ def test_page_reloads_seat_counts_from_sessions_and_has_a_counts_container():
 
     assert 'id="seat-counts"' in page
     assert "fetch('/sessions')" in page
+
+
+def test_page_has_a_cancel_control_per_reservation_posting_to_its_cancel_path():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert 'id="reservation-list"' in page
+    assert "/reservations/" in page
+    assert "/cancel" in page
