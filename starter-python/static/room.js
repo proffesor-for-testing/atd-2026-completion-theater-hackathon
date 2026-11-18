@@ -1,4 +1,4 @@
-// "The Room": a living, read-only view of the same API state.
+// "The Room": a read-only view, redrawn from each server snapshot on refresh (fixed two-table layout).
 // It owns no booking state. render(sessions, reservations) diffs successive SERVER snapshots:
 // a reservation that appears drops into its chair; one that is cancelled leaves as a ghost.
 // Booking always goes through the labelled 2D form; clicking the room only preselects a session.
@@ -193,8 +193,8 @@ export function mount(container, { onPick, avatar } = {}) {
   }
   function confetti(at) {
     const bits = [], colors = [C.sun, C.red, 0x1e7bff, 0x2db665, C.ink];
-    for (let i = 0; i < 22; i++) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.055), new THREE.MeshBasicMaterial({ color: colors[i % colors.length], side: THREE.DoubleSide, transparent: true }));
+    for (let i = 0; i < 40; i++) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.1), new THREE.MeshBasicMaterial({ color: colors[i % colors.length], side: THREE.DoubleSide, transparent: true }));
       m.position.copy(at);
       const a = Math.random() * Math.PI * 2, sp = 1.2 + Math.random() * 1.6;
       m.userData.v = new THREE.Vector3(Math.cos(a) * sp * 0.7, 2.4 + Math.random() * 2, Math.sin(a) * sp * 0.7);
@@ -233,13 +233,17 @@ export function mount(container, { onPick, avatar } = {}) {
   }
   function ghostAway(p, root) {
     const g = p.group, y0 = g.position.y, x0 = g.position.x, start = performance.now();
-    p.body.body.material.color.set(0xffffff);
+    p.body.body.material.color.set(0xd9d4ca);
     animate((now) => {
       const k = Math.min(1, (now - start) / 1500), e = 1 - Math.pow(1 - k, 2);
       g.position.y = y0 + e * 2.6;
       g.position.x = x0 + Math.sin(k * Math.PI * 3) * 0.14;
       for (const m of p.fade) m.opacity = 1 - k * k;
-      if (k >= 1) { root.remove(g); return false; }
+      if (k >= 1) {
+        root.remove(g);
+        g.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+        return false;
+      }
     });
   }
   function setLamp(t, on, withMotion) {
@@ -249,7 +253,7 @@ export function mount(container, { onPick, avatar } = {}) {
     const start = performance.now();
     animate((now) => {
       const k = Math.min(1, (now - start) / 480);
-      const f = on ? (k < 0.7 ? (Math.sin(k * 46) > 0 ? k : k * 0.25) : k) : 1 - k; // bulb flicker on the way up
+      const f = on ? k : 1 - k; // smooth fade: no flashing (WCAG 2.3.1)
       apply(f);
       if (k >= 1) { apply(on ? 1 : 0); return false; }
     });
