@@ -115,7 +115,7 @@ function person(alias, color, svgMarkup, redraw) {
   return { group: g, body, bodies, fade: [body.body.material, body.line.material, face.material, tag.material, ...fadeExtra] };
 }
 
-export function mount(container, { onPick, avatar, onLayout } = {}) {
+export function mount(container, { onPick, onPerson, avatar, onLayout } = {}) {
   const canvas = container.querySelector('canvas');
   // Throws when WebGL is unavailable; the page catches that and keeps the room hidden.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
@@ -310,6 +310,7 @@ export function mount(container, { onPick, avatar, onLayout } = {}) {
         const p = person(res.attendeeAlias, new THREE.Color(av.color), av.svg, kick);
         p.sessionId = s.id; p.seat = seat;
         p.group.position.set(chairPos.x, SEAT_TOP - 0.02, chairPos.z + 0.05);
+        p.alias = res.attendeeAlias; p.group.userData.person = p;
         t.root.add(p.group); people.set(res.id, p);
         if (motion) dropIn(p, first ? 140 * stagger++ : 0, !first);
       });
@@ -325,6 +326,22 @@ export function mount(container, { onPick, avatar, onLayout } = {}) {
     const r = canvas.getBoundingClientRect();
     ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
+    // a character: hop + spin, then open their profile
+    for (const p of people.values()) {
+      if (!ray.intersectObject(p.group, true).length) continue;
+      if (!REDUCED && !p.hopping) {
+        p.hopping = true;
+        const g = p.group, y0 = g.position.y, start = performance.now();
+        animate((now) => {
+          const k = Math.min(1, (now - start) / 520);
+          g.position.y = y0 + Math.sin(k * Math.PI) * 0.55;
+          g.rotation.y = k * Math.PI * 2;
+          if (k >= 1) { g.position.y = y0; g.rotation.y = 0; p.hopping = false; return false; }
+        });
+      }
+      if (onPerson) setTimeout(() => onPerson(p.alias), REDUCED ? 0 : 450);
+      return;
+    }
     for (const t of Object.values(tables)) {
       if (ray.intersectObject(t.root, true).length) { if (onPick) onPick(t.id); return; }
     }

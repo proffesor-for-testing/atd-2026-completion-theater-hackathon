@@ -483,7 +483,7 @@ refresh();
     holder.hidden = false;
     holder.dataset.fit = 'full';
     document.body.classList.add('immersive');
-    room = mod.mount(holder, { onLayout: hangCards, avatar: (alias) => { const s = avatar(alias, 128); s.setAttribute('xmlns', SVG); return { color: PALETTE[hash(alias) % PALETTE.length], svg: new XMLSerializer().serializeToString(s) }; }, onPick: (id) => {
+    room = mod.mount(holder, { onLayout: hangCards, onPerson: (alias) => openProfile(alias), avatar: (alias) => { const s = avatar(alias, 128); s.setAttribute('xmlns', SVG); return { color: PALETTE[hash(alias) % PALETTE.length], svg: new XMLSerializer().serializeToString(s) }; }, onPick: (id) => {
       selected = id;
       const radio = $('session-seg').querySelector('input[value="' + CSS.escape(id) + '"]');
       if (radio) radio.checked = true;
