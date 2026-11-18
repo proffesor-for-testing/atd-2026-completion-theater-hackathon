@@ -25,10 +25,11 @@ Steps are in order. Each one is a single test-first cycle.
 - [x] AC-05: a replay whose alias differs only by surrounding spaces returns the original reservation
 - [x] AC-05: same key with a different session or alias returns a conflict and changes no state
 - [x] AC-06: cancelling an active reservation releases exactly one seat
-- [ ] AC-06: repeated cancellation reports cancelled and leaves the count unchanged
-- [ ] AC-06: replaying the original request after cancellation returns the cancelled record and does not reactivate it
+- [x] AC-06: repeated cancellation reports cancelled and leaves the count unchanged (ruled covered)
+- [x] AC-06: replaying the original request after cancellation returns the cancelled record and does not reactivate it (ruled done)
 - [x] AC-07: active and cancelled reservations survive a restart without reset, read back over HTTP (covered by user ruling; the restart probe passed before any code change)
 - [x] AC-08: malformed JSON returns a 400 JSON error with no state change
+- [x] AC-08: a body missing `attendeeAlias` or not a JSON object returns a 400 JSON error with no state change and no dropped connection
 - [ ] AC-08: unknown reservation cancel returns a 4xx JSON error with no state change (test not yet written)
 - [ ] AC-08: the process stays available after each rejected request
 - [x] AC-08 (left after blank alias): unknown session and missing `requestKey` return a 4xx JSON error instead of dropping the connection

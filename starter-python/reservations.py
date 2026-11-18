@@ -74,3 +74,14 @@ def request_error(state: dict, body: dict) -> dict | None:
         return {"error": {"code": "INVALID_REQUEST_KEY",
                           "message": "Request key must be a non-empty string"}}
     return None
+
+
+def body_shape_error(body) -> dict | None:
+    """Pure: the 400 error body when a parsed request body is not a reservation object, or None."""
+    if not isinstance(body, dict):
+        return {"error": {"code": "INVALID_REQUEST",
+                          "message": "Request body must be a JSON object"}}
+    if not isinstance(body.get("attendeeAlias"), str):
+        return {"error": {"code": "INVALID_ALIAS",
+                          "message": "Attendee alias must be a string"}}
+    return None

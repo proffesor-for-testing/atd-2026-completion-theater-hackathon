@@ -130,6 +130,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.json_response(400, {'error': {'code': 'MALFORMED_JSON',
                     'message': 'Request body must be valid JSON'}})
                 return
+            shape_error = reservations.body_shape_error(body)
+            if shape_error is not None:
+                self.json_response(400, shape_error)
+                return
             if reservations.alias_is_blank(body['attendeeAlias']):
                 self.json_response(400, {'error': {'code': 'INVALID_ALIAS',
                     'message': 'Attendee alias must not be blank'}})
