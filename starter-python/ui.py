@@ -118,6 +118,7 @@ def render_page(sessions: list[dict]) -> str:
         '<html lang="en"><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
         "<title>Session Seat Desk</title>\n"
+        '<link rel="stylesheet" href="/static/style.css">\n'
         "<main><h1>Session Seat Desk</h1>\n"
         '<div id="error-message" role="alert" hidden><span id="error-text"></span> '
         '<button type="button" id="dismiss-error">Dismiss</button></div>\n'

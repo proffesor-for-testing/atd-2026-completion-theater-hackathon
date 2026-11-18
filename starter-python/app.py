@@ -97,6 +97,13 @@ class Handler(BaseHTTPRequestHandler):
                     'message': 'No reservation with ID %s' % reservation_id}})
             else:
                 self.json_response(200, record)
+        elif self.path == '/static/style.css':
+            payload = (BASE / 'static' / 'style.css').read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/css; charset=utf-8')
+            self.send_header('Content-Length', str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
         elif self.path == '/':
             payload = ui.render_page(read_sessions()).encode('utf-8')
             self.send_response(200)

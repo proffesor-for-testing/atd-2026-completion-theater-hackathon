@@ -1,0 +1,157 @@
+/* Session Seat Desk: clean, readable layout. Plain CSS, no build step. */
+
+:root {
+  --ink: #1d2433;
+  --muted: #5b6475;
+  --accent: #2f4fbf;
+  --accent-ink: #ffffff;
+  --surface: #ffffff;
+  --page: #f4f6fa;
+  --line: #d9dee8;
+  --danger-bg: #fdecec;
+  --danger-ink: #8a1c1c;
+  --focus: #f0b429;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 44rem;
+  margin: 2.5rem auto;
+  padding: 2rem 2.25rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.06);
+}
+
+h1 {
+  margin: 0 0 1.25rem;
+  font-size: 1.75rem;
+  color: var(--ink);
+}
+
+h2 {
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+li strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+form p {
+  margin: 0 0 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+label {
+  font-weight: 600;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #aab3c4;
+  border-radius: 6px;
+}
+
+button {
+  font: inherit;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+button:hover {
+  filter: brightness(1.08);
+}
+
+button[type="submit"] {
+  margin-top: 0.25rem;
+}
+
+li button {
+  margin-left: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.9rem;
+  background: #fff;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+#error-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  border: 1px solid #f1c0c0;
+  border-radius: 8px;
+}
+
+#error-message[hidden] {
+  display: none;
+}
+
+#dismiss-error {
+  background: #fff;
+  color: var(--danger-ink);
+  border-color: #e0a3a3;
+}
+
+@media (max-width: 40rem) {
+  main {
+    margin: 0;
+    padding: 1.25rem;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}
