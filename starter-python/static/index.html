@@ -118,6 +118,52 @@
   .profile-body li:last-child { border-bottom: 0; }
   .profile-body .sess { font-weight: 700; }
   .profile-body .title { display: block; font-size: 13px; color: var(--muted); }
+
+  /* ---------- Immersive mode: only when the 3D room mounted (no WebGL = classic layout) ---------- */
+  body.immersive { overflow: hidden; }
+  body.immersive main { max-width: none; padding: 0; }
+  body.immersive .room { position: fixed; inset: 0; height: auto; margin: 0; border: 0; box-shadow: none; z-index: 0;
+    background: var(--bg) radial-gradient(circle, rgba(20,20,20,.13) 1px, transparent 1.4px) 0 0 / 22px 22px; }
+  body.immersive .mast { position: fixed; top: 0; left: 0; right: 0; z-index: 3; padding: 22px 28px; margin: 0; align-items: flex-start; pointer-events: none; }
+  body.immersive .mast > * { pointer-events: auto; }
+  body.immersive #conn-msg { position: fixed; top: 96px; left: 50%; transform: translateX(-50%); z-index: 4; max-width: min(36rem, calc(100vw - 32px)); }
+  body.immersive #conn-msg:empty { display: none; }
+  body.immersive .sessions { display: block; margin: 0; }
+  body.immersive .card { position: fixed; z-index: 2; width: 230px; padding: 14px 16px; transform: translate(-50%, -100%); left: -999px; top: -999px; }
+  body.immersive .card h2 { font-size: 18px; margin: 4px 0 8px; padding-right: 54px; }
+  body.immersive .card .big b { font-size: 46px; }
+  body.immersive .card .stats { display: none; }
+  body.immersive .card .stamp { top: 12px; right: 12px; font-size: 11px; }
+  body.immersive .panel { position: fixed; z-index: 3; left: 50%; bottom: 22px; transform: translateX(-50%); width: min(820px, calc(100vw - 32px)); margin: 0; padding: 16px 20px; }
+  body.immersive .panel h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  body.immersive #reserve-msg { margin-top: 10px; }
+  body.immersive #reserve-msg:empty { display: none; }
+  body.immersive .people { position: fixed; z-index: 5; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); background: var(--white); border-left: 2px solid var(--ink);
+    box-shadow: -6px 0 0 var(--ink); padding: 24px 22px; overflow-y: auto; transform: translateX(110%); transition: transform .28s cubic-bezier(.2,.8,.2,1); visibility: hidden; }
+  body.immersive.drawer-open .people { transform: none; visibility: visible; }
+  body.immersive .people .list-head { flex-direction: column; align-items: stretch; }
+  body.immersive .people .res li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+  body.immersive .people .res li > .person { flex: 1 1 100%; }
+  body.immersive .people .res li > :last-child { margin-left: auto; }
+  body.immersive .people .rid { font-size: 11px; word-break: break-all; }
+  body.immersive .people .find { width: 100%; }
+  body.immersive .people .find > div { flex: 1; }
+  body.immersive .people .find input { width: 100%; }
+  #people-toggle, #people-close { display: none; }
+  body.immersive #people-toggle { display: inline-block; }
+  body.immersive #people-close { display: block; margin-left: auto; margin-bottom: 8px; }
+  body.immersive footer { position: fixed; z-index: 2; left: 28px; bottom: 4px; margin: 0; border: 0; padding: 0; opacity: .7; }
+  @media (max-width: 760px) {
+    body.immersive { overflow: auto; }
+    body.immersive .room { position: sticky; top: 0; height: 52vh; inset: auto; }
+    body.immersive .mast { position: absolute; padding: 14px 16px; }
+    body.immersive .card { width: 160px; padding: 10px 12px; }
+    body.immersive .card h2 { display: none; }
+    body.immersive .card .big b { font-size: 34px; }
+    body.immersive .panel { position: relative; left: auto; bottom: auto; transform: none; margin: 16px auto 32px; }
+    body.immersive footer { position: static; padding: 0 16px 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { body.immersive .people { transition: none; } }
   footer { margin-top: 56px; padding-top: 16px; border-top: 2px solid var(--ink); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font: 400 12px ui-monospace, Menlo, monospace; color: var(--muted); }
   footer span { overflow-wrap: anywhere; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -131,7 +177,8 @@
       <h1>Seat Desk</h1>
     </div>
     <div class="live"><span class="dot" id="conn-dot" aria-hidden="true"></span><span id="sessions-updated">Connecting…</span><span id="conn-live" class="sr-only" aria-live="polite"></span>
-      <button type="button" class="btn ghost" id="refresh-btn">Refresh</button></div>
+      <button type="button" class="btn ghost" id="refresh-btn">Refresh</button>
+      <button type="button" class="btn ghost" id="people-toggle" aria-expanded="false" aria-controls="people">Reservations</button></div>
   </header>
   <div id="conn-msg" class="msg" tabindex="-1"></div>
 
@@ -166,7 +213,8 @@
     <div id="reserve-msg" class="msg" tabindex="-1" aria-live="polite"></div>
   </section>
 
-  <section aria-labelledby="list-h">
+  <section aria-labelledby="list-h" class="people" id="people">
+    <button type="button" class="btn ghost" id="people-close">Close</button>
     <div class="list-head">
       <h2 id="list-h">Reservations</h2>
       <form id="find-form" class="find" role="search">
@@ -198,6 +246,20 @@ const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls)
 const newKey = () => 'ui-' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 let selected = null;
 let titles = {};
+let anchors = {};
+function hangCards(a) {
+  if (a) anchors = a;
+  if (!document.body.classList.contains('immersive')) return;
+  for (const card of document.querySelectorAll('#sessions-body .card')) {
+    const p = anchors[card.dataset.session];
+    if (p) { card.style.left = Math.round(p.x) + 'px'; card.style.top = Math.round(p.y) + 'px'; }
+  }
+}
+function setDrawer(open) {
+  document.body.classList.toggle('drawer-open', open);
+  $('people-toggle').setAttribute('aria-expanded', String(open));
+  if (open) $('find-alias').focus(); else $('people-toggle').focus();
+}
 
 // Generated avatar: deterministic from the alias, drawn as SVG. No photos, no uploads, no personal data.
 const SVG = 'http://www.w3.org/2000/svg';
@@ -303,6 +365,7 @@ async function loadSessions() {
   lastSessions = r.data.sessions;
   titles = Object.fromEntries(r.data.sessions.map((s) => [s.id, s.title]));
   box.replaceChildren(...cards);
+  hangCards();
   const focusedSeg = document.activeElement && document.activeElement.name === 'sessionId';
   $('session-seg').replaceChildren(...seg);
   if (focusedSeg) { const c = $('session-seg').querySelector('input:checked'); if (c) c.focus(); }
@@ -399,6 +462,11 @@ $('reserve-form').addEventListener('submit', async (ev) => {
   await refresh();
 });
 $('refresh-btn').addEventListener('click', refresh);
+$('people-toggle').addEventListener('click', () => setDrawer(!document.body.classList.contains('drawer-open')));
+$('people-close').addEventListener('click', () => setDrawer(false));
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && document.body.classList.contains('drawer-open') && !$('profile').open) setDrawer(false);
+});
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 window.addEventListener('focus', refresh);
 $('find-form').addEventListener('submit', (ev) => { ev.preventDefault(); show($('list-msg'), '', ''); loadReservations(); });
@@ -412,7 +480,9 @@ refresh();
     const mod = await import('/room.js');
     const holder = $('room');
     holder.hidden = false;
-    room = mod.mount(holder, { avatar: (alias) => { const s = avatar(alias, 128); s.setAttribute('xmlns', SVG); return { color: PALETTE[hash(alias) % PALETTE.length], svg: new XMLSerializer().serializeToString(s) }; }, onPick: (id) => {
+    holder.dataset.fit = 'full';
+    document.body.classList.add('immersive');
+    room = mod.mount(holder, { onLayout: hangCards, avatar: (alias) => { const s = avatar(alias, 128); s.setAttribute('xmlns', SVG); return { color: PALETTE[hash(alias) % PALETTE.length], svg: new XMLSerializer().serializeToString(s) }; }, onPick: (id) => {
       selected = id;
       const radio = $('session-seg').querySelector('input[value="' + CSS.escape(id) + '"]');
       if (radio) radio.checked = true;
@@ -421,6 +491,7 @@ refresh();
     await paintRoom();
   } catch (e) {
     $('room').hidden = true; room = null;
+    document.body.classList.remove('immersive', 'drawer-open');
     console.info('3D room unavailable; 2D app unaffected:', e && e.message);
   }
 })();

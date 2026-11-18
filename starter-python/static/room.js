@@ -7,7 +7,7 @@ import * as THREE from '/vendor/three.module.min.js';
 const C = { ink: 0x141414, white: 0xffffff, red: 0xe3262f, sun: 0xffd21f, wood: 0xf3eee4, plinth: 0xffffff, bulbOff: 0xcfcac0 };
 const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 const LIFT = 0.2;          // everything stands on a 0.2-high plinth
-const CHAIR_Z = -1.0, SEAT_TOP = 0.59;
+const CHAIR_Z = -1.0, SEAT_TOP = 0.59, CORD_TOP = 4.3;
 
 // ---------- toon helpers ----------
 function outlined(geometry, color, parent, { edges = true } = {}) {
@@ -74,8 +74,8 @@ function table(scene, x, seats, id) {
   const decal = new THREE.Mesh(new THREE.PlaneGeometry(0.42 * lbl.aspect, 0.42), new THREE.MeshBasicMaterial({ map: lbl.tex, transparent: true }));
   decal.rotation.x = -Math.PI / 2; decal.position.set(0, 1.056, 0.22); root.add(decal);
   // pendant lamp
-  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 2.4), new THREE.MeshBasicMaterial({ color: C.ink }));
-  cord.position.y = 4.45; root.add(cord);
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, CORD_TOP - 3.4), new THREE.MeshBasicMaterial({ color: C.ink }));
+  cord.position.y = (CORD_TOP + 3.4) / 2; root.add(cord);
   const shade = outlined(new THREE.ConeGeometry(0.38, 0.34, 32, 1, true), C.ink, root, { edges: false }); shade.position.y = 3.25;
   shade.material.side = THREE.DoubleSide;
   const bulbMat = new THREE.MeshBasicMaterial({ color: C.bulbOff });
@@ -95,18 +95,27 @@ function table(scene, x, seats, id) {
 // ---------- people ----------
 function person(alias, color, svgMarkup, redraw) {
   const g = new THREE.Group();
+  const fadeExtra = [], bodies = [];
   const body = hull(new THREE.CapsuleGeometry(0.21, 0.26, 6, 20), color, g, 1.12);
   body.group.position.y = 0.36;
+  for (const side of [-1, 1]) {
+    const arm = hull(new THREE.CapsuleGeometry(0.065, 0.42, 4, 12), color, g, 1.22);
+    arm.group.rotation.x = Math.PI / 2 - 0.12;
+    arm.group.position.set(side * 0.2, 0.5, 0.3);
+    fadeExtra.push(arm.body.material, arm.line.material);
+    bodies.push(arm.body.material);
+  }
   const face = new THREE.Sprite(new THREE.SpriteMaterial({ map: svgTexture(svgMarkup, redraw), transparent: true }));
   face.scale.set(0.52, 0.52, 1); face.position.y = 0.93;
   const tagT = textTexture(alias.slice(0, 16), { size: 34, weight: 700, color: '#ffffff', bg: '#141414' });
   const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagT.tex, transparent: true, depthTest: false }));
   tag.scale.set(0.24 * tagT.aspect, 0.24, 1); tag.position.y = 1.36; tag.renderOrder = 20;
   g.add(face, tag);
-  return { group: g, body, fade: [body.body.material, body.line.material, face.material, tag.material] };
+  bodies.push(body.body.material);
+  return { group: g, body, bodies, fade: [body.body.material, body.line.material, face.material, tag.material, ...fadeExtra] };
 }
 
-export function mount(container, { onPick, avatar } = {}) {
+export function mount(container, { onPick, avatar, onLayout } = {}) {
   const canvas = container.querySelector('canvas');
   // Throws when WebGL is unavailable; the page catches that and keeps the room hidden.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
@@ -133,7 +142,8 @@ export function mount(container, { onPick, avatar } = {}) {
 
   // camera: orthographic; it only moves when the visitor moves the pointer
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-  const target = new THREE.Vector3(0.15, 1.45, -0.3);
+  const FULL = container.dataset.fit === 'full';
+  const target = new THREE.Vector3(0.15, FULL ? 2.05 : 1.45, -0.3);
   const base = new THREE.Spherical().setFromVector3(new THREE.Vector3(6.5, 7.2, 9.5));
   const look = { yaw: 0, pitch: 0, ty: 0, tp: 0 };
   function placeCamera() {
@@ -147,7 +157,7 @@ export function mount(container, { onPick, avatar } = {}) {
     const w = container.clientWidth, h = container.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
-    const aspect = w / h, needW = 6.1, needH = 3.35;
+    const aspect = w / h, needW = 6.0, needH = FULL ? 5.4 : 3.35;
     let halfW = needW, halfH = needW / aspect;
     if (halfH < needH) { halfH = needH; halfW = needH * aspect; }
     Object.assign(camera, { left: -halfW, right: halfW, top: halfH, bottom: -halfH });
@@ -165,9 +175,20 @@ export function mount(container, { onPick, avatar } = {}) {
     placeCamera();
     for (const a of [...anims]) if (a(now, dt) === false) anims.delete(a);
     renderer.render(scene, camera);
+    layout();
     const settling = Math.abs(look.ty - look.yaw) > 1e-4 || Math.abs(look.tp - look.pitch) > 1e-4;
     raf = anims.size || settling ? requestAnimationFrame(loop) : 0;
     if (!raf) last = 0;
+  }
+  const tmp = new THREE.Vector3();
+  function layout() {
+    if (!onLayout) return;
+    const w = container.clientWidth, h = container.clientHeight, out = {};
+    for (const t of Object.values(tables)) {
+      tmp.set(t.root.position.x, LIFT + CORD_TOP, 0).project(camera);
+      out[t.id] = { x: (tmp.x + 1) / 2 * w, y: (1 - tmp.y) / 2 * h };
+    }
+    onLayout(out);
   }
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
   function animate(fn) { anims.add(fn); kick(); }
@@ -233,7 +254,7 @@ export function mount(container, { onPick, avatar } = {}) {
   }
   function ghostAway(p, root) {
     const g = p.group, y0 = g.position.y, x0 = g.position.x, start = performance.now();
-    p.body.body.material.color.set(0xd9d4ca);
+    for (const m of p.bodies) m.color.set(0xd9d4ca);
     animate((now) => {
       const k = Math.min(1, (now - start) / 1500), e = 1 - Math.pow(1 - k, 2);
       g.position.y = y0 + e * 2.6;
@@ -312,5 +333,6 @@ export function mount(container, { onPick, avatar } = {}) {
 
   resize();
   renderer.render(scene, camera);
-  return { render };
+  layout();
+  return { render, relayout: () => { resize(); } };
 }
