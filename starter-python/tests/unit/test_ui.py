@@ -52,3 +52,17 @@ def test_page_has_a_cancel_control_per_reservation_posting_to_its_cancel_path():
     assert 'id="reservation-list"' in page
     assert "/reservations/" in page
     assert "/cancel" in page
+
+
+@pytest.mark.parametrize("marker", ['id="error-message"', 'role="alert"', 'id="dismiss-error"'])
+def test_page_has_a_visible_dismissable_error_region(marker):
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert marker in page
+
+
+def test_page_script_shows_the_api_error_message_when_an_action_fails():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert "error.message" in page
+    assert "!response.ok" in page
