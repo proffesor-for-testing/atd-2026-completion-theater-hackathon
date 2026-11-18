@@ -1,24 +1,76 @@
-# Optional Python scaffold
+# Session Seat Desk (Team Jonas)
 
-Python 3.11+ with standard library only. No pip install, API key, Docker, database server or deployment is required. Any other stack is welcome. This scaffold supplies transport, static-page serving, a fixture schema and explicit reset. **All scored reservation behavior is deliberately unimplemented.**
+A local JSON API plus a basic browser UI for reserving seats in two fictional workshops (CT-101, CT-102). State lives in SQLite and survives restarts. Python 3.11+, **standard library only**: there is nothing to install.
 
-From this directory:
+> **Disclosure.** This app was built with AI agents before the session's 60-minute build window. Every claim below is backed by a command you can rerun against the frozen commit. Judge the receipts, not this README.
 
-```sh
-python3 app.py --reset
-python3 app.py
-```
+## Run
 
-On Windows replace `python3` with `py -3`. Open http://127.0.0.1:8765 . Stop with Ctrl+C. Restart with the same command **without** --reset to preserve state. The placeholder UI and /health do not satisfy the PRD.
+| Step | Command (run in this directory) |
+| --- | --- |
+| Runtime | `python3 --version`; needs 3.11+ (built and tested on 3.12.3, Linux) |
+| Install | none: stdlib only, no lockfile needed |
+| Reset fixture (explicit, only this `DATA_DIR`) | `python3 app.py --reset` |
+| Start | `python3 app.py`, then open http://127.0.0.1:8765 |
+| Stop | Ctrl+C (or SIGTERM). Every write is committed before its response is sent. |
+| Restart without reset | `python3 app.py` again. Startup **never** resets. |
+| Test | `python3 -m unittest -v test_acceptance test_store_check test_hardening` (about 40 s; exit status 0 means all passed, failures and errors exit 1; the last line prints counts and any skips) |
+| Verify the stored data directly | `python3 app.py --check` (exit 0 = ok, 1 = problems; prints JSON) |
 
-The default state is .state/seats.db under this directory. DATA_DIR changes the fixture directory and PORT changes the listener port. Reset refuses an existing database without the matching fixture ownership marker. Use a new directory for every experiment; never point it at a real database.
+Configuration comes from environment variables: `PORT` (default 8765) and `DATA_DIR` (default `./.state`). The server binds only to 127.0.0.1. On Windows use `py -3` in place of `python3`.
 
-Implement the API in app.py or split it into modules. Handle overlapping requests safely. Replace the static page with actual API-backed state. Do not show a successful reservation until the API confirms it. Basic labels, keyboard access and visible error messages belong in the basic UI, not in optional creativity work.
+Reset refuses to touch a `seats.db` that lacks the fixture ownership marker. Use a new `DATA_DIR` for each experiment.
 
-```sh
-python3 -m unittest -v test_app
-```
+## State
 
-This starts RED on purpose. A placeholder health test must not become your only app test. Replace the sentinel with meaningful tests, including rejected input, replay and restart. Passing repository helper tests means only that the helper tools work, not that your app works.
+- **Location:** `$DATA_DIR/seats.db`, by default `starter-python/.state/seats.db`. `.state/` is excluded from the source snapshot.
+- **Tables:** `sessions`, `reservations` (`request_key` is UNIQUE across all sessions), and `audit_log` (a hash-chained record of every reserve and cancel).
+- **Inspect a record:** `sqlite3 .state/seats.db "select id,session_id,attendee_alias,request_key,status from reservations"`. The `sqlite3` CLI is optional; `python3 app.py --check` gives the same view without it.
 
-The adapter.json file tells the shared verifier how to start/reset your app. Keep it synchronized with your actual commands and response field names. `{python}` resolves to the verifier's Python interpreter, including on Windows.
+## API (fixed paths; field names exactly as `docs/api-contract.md`)
+
+| Request | Success | Rejections (4xx + `{"error":{"code","message"}}`) |
+| --- | --- | --- |
+| `GET /sessions` | 200 `{"sessions":[{id,title,capacity,activeCount,remainingSeats}]}` | none |
+| `POST /reservations` `{sessionId,attendeeAlias,requestKey}` | **201** new booking; **200** replay of the same key with the same session and trimmed alias (returns the original record and its current status) | 400 `MALFORMED_JSON` / `INVALID_BODY` / `INVALID_ALIAS` / `INVALID_REQUEST_KEY` / `INVALID_SESSION_ID`; 404 `UNKNOWN_SESSION`; 409 `REQUEST_KEY_CONFLICT`, `CAPACITY_FULL`; 413 `BODY_TOO_LARGE` |
+| `GET /reservations/{id}` | 200 reservation | 404 `UNKNOWN_RESERVATION` |
+| `POST /reservations/{id}/cancel` `{}` | 200 cancelled record (repeat cancellations return the same record) | 404 `UNKNOWN_RESERVATION`, 400 if the body is not a JSON object |
+| `GET /reservations?alias=Ada` (extra) | 200 `{"reservations":[...]}`; used by the UI's "find booking" box | none |
+| `GET /health` (extra) | 200 store path, server pid, number of audited changes, last audit hash | 503 `STORE_MISSING` |
+| Any other method or path | none | JSON 404 / 405; no HTML error pages anywhere |
+
+Reservation: `{"id","sessionId","attendeeAlias","requestKey","status","createdAt","cancelledAt"}`. `id` is a UUID string. The alias is stored trimmed. Comparisons are otherwise case-sensitive. `adapter.json` uses the default mapping (no wrapper).
+
+Input rules: `requestKey` must be a non-blank string, and the alias must contain at least one visible character (zero-width or invisible-only aliases are rejected, as are control characters). Invalid Unicode, deeply nested JSON and malformed request lines get 400/405 JSON, never 500.
+
+Order of decisions in `POST /reservations`: validate input, then session exists (so reusing K1 with an unknown session gives 404, not 409; both are rejections with no state change), then **key replay or conflict**, then capacity, then insert. A replay therefore returns the original record even when the session is now full or the booking was cancelled. Every check-then-write runs under one process-wide lock **and** a SQLite `BEGIN IMMEDIATE` transaction.
+
+## Tests and what they establish
+
+| Suite | What it does | Independence |
+| --- | --- | --- |
+| `test_acceptance.py` (24 tests) | Black-box tests for AC-02 to AC-08: starts the real server as a subprocess, uses a fresh `DATA_DIR` per test, runs real restarts, 5 race batches of 10 threads, and reads SQLite directly | Written by a separate agent (AQE `qe-tdd-specialist`) **from the PRD only**, without reading `app.py` |
+| `test_store_check.py` (6 tests) | `app.py --check` passes on a clean store and **fails** on 5 kinds of tampering: reactivated booking, ghost row, overbooking, alias edited in place, rewritten audit history | Negative controls for the checker itself |
+| `test_hardening.py` (9 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines | Each was a confirmed defect before the fix |
+| `tools/verify.py` (organizer) | API challenges for AC-02 to AC-08, including 10 concurrent batches and a real process restart | Organizer code, unmodified |
+
+Coverage was **not measured**, and we make no coverage claim. The sensitivity of the tests is shown with mutation testing (see the evidence manifest), not with a percentage.
+
+## Beyond the PRD
+
+- **D1, a retry-safe booking UI.** The form keeps its request key until the server confirms success. A double-click, a timeout followed by a retry, or a resubmit therefore cannot book a second seat. The UI says "Already processed" on a replay. A "find by alias" box lets a helper locate an attendee's booking without knowing its ID.
+- **D2, independent store verification.** `python3 app.py --check` reads the database directly, not through HTTP. It checks that active ≤ capacity and that aliases are trimmed. It then replays the hash-chained `audit_log` (each entry hashes the full record and the previous hash) and requires the result to equal the reservations table exactly: session, alias, key and status. This catches ghost rows, silent reactivations and edited history that API counts alone cannot show. `test_store_check.py` proves the checker fails when it should.
+
+## Known gaps and limits
+
+- Ten bounded race batches show that no overbooking occurred in those trials. They do not prove race freedom. Running two server processes on one `DATA_DIR` relies on SQLite `BEGIN IMMEDIATE` alone, since the thread lock is per process.
+- The UI was checked in Chromium on Linux only. No screen-reader test was done.
+- Slow or stalled clients are disconnected after 15 s. The thread count is still unbounded under a flood of connections; this is a local fixture, not a hardened server.
+- `--check` assumes the audit log is written only by this app. Someone with write access to the file can recompute the chain, so it shows inconsistency, not tamper-proofing against an attacker.
+- There is no authentication, by design (PRD scope).
+
+## Handoff
+
+- Fork and branch: recorded in the PR. Declared app directory: `starter-python/`.
+- The frozen full commit SHA, snapshot `sourceId` and `artifactSha256` are recorded in the PR and evidence manifest after the final commit (not in this file, to avoid a self-referencing commit).
+- Building needed Claude Code and Agentic QE agents. **Running needs only Python.** No account, key or network is required.

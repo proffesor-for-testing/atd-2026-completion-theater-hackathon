@@ -1,8 +1,224 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Session Seat Desk: starter scaffold</title>
-<style>body{font:1.1rem system-ui;max-width:48rem;margin:3rem auto;padding:0 1rem;line-height:1.6}code{background:#eef1f6;padding:.2rem}h1{color:#101760}</style>
-<main><h1>Session Seat Desk</h1><p><strong>Scaffold only. The reservation app is not implemented.</strong></p>
-<p>Your team will build session readback, booking, request replay, cancellation, durable state and the UI described in the PRD.</p>
-<p>Replace this page with a labelled, keyboard-usable interface that shows actual API state. Do not turn sample text into a success claim.</p>
-<p>The health endpoint confirms only that this server is listening. It does not establish any acceptance criterion.</p></main></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Seat Desk</title>
+<style>
+  :root { --ink:#14182b; --muted:#5b6275; --line:#d9dce5; --bg:#f6f7fb; --card:#fff; --accent:#1d3fbf; --ok:#0b7a3e; --bad:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:56rem; margin:0 auto; padding:1.5rem 1rem 4rem; }
+  h1 { font-size:1.6rem; margin:0 0 .25rem; }
+  h2 { font-size:1.15rem; margin:0 0 .75rem; }
+  .sub { color:var(--muted); margin:0 0 1.5rem; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1rem 1.25rem; margin-bottom:1rem; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.45rem .5rem; border-bottom:1px solid var(--line); vertical-align:middle; }
+  th { font-size:.85rem; color:var(--muted); font-weight:600; }
+  td.num { font-variant-numeric:tabular-nums; }
+  .full { color:var(--bad); font-weight:600; }
+  form { display:grid; grid-template-columns:repeat(auto-fit,minmax(12rem,1fr)); gap:.75rem 1rem; align-items:end; }
+  label { display:block; font-weight:600; font-size:.9rem; margin-bottom:.2rem; }
+  input, select { width:100%; font:inherit; padding:.5rem .6rem; border:1px solid #9aa1b4; border-radius:6px; background:#fff; }
+  button { font:inherit; padding:.5rem .9rem; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:#fff; color:var(--accent); }
+  button:disabled { opacity:.55; cursor:not-allowed; }
+  :focus-visible { outline:3px solid #ffb300; outline-offset:2px; }
+  .hint { color:var(--muted); font-size:.85rem; margin:.25rem 0 0; }
+  .msg { margin:.75rem 0 0; padding:.6rem .8rem; border-radius:6px; }
+  .msg:empty { display:none; }
+  .msg.error { background:#fdecea; color:var(--bad); border:1px solid #f3b8b3; }
+  .msg.ok { background:#e8f5ee; color:var(--ok); border:1px solid #b5dfc6; }
+  .status-active { color:var(--ok); font-weight:600; }
+  .status-cancelled { color:var(--muted); text-decoration:line-through; }
+  code { font-size:.85em; background:#eef1f6; padding:.05rem .3rem; border-radius:4px; word-break:break-all; }
+  .row { display:flex; gap:.5rem; align-items:end; flex-wrap:wrap; }
+  .row > div { flex:1 1 12rem; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Session Seat Desk</h1>
+  <p class="sub">Every number on this page is read back from the server after each action. Nothing is shown as booked until the API confirms it.</p>
+
+  <section aria-labelledby="sessions-h">
+    <h2 id="sessions-h">Sessions</h2>
+    <table>
+      <caption class="sr-only">Seats per session</caption>
+      <thead><tr><th scope="col">Session</th><th scope="col">Title</th><th scope="col">Capacity</th><th scope="col">Booked</th><th scope="col">Remaining</th></tr></thead>
+      <tbody id="sessions-body"><tr><td colspan="5">Loading…</td></tr></tbody>
+    </table>
+    <div class="row" style="margin-top:.5rem;align-items:center">
+      <p class="hint" id="sessions-updated" aria-live="polite" style="margin:0;flex:1"></p>
+      <button type="button" class="secondary" id="refresh-btn">Refresh from server</button>
+    </div>
+    <div id="conn-msg" class="msg" tabindex="-1"></div>
+  </section>
+
+  <section aria-labelledby="reserve-h">
+    <h2 id="reserve-h">Reserve a seat</h2>
+    <form id="reserve-form" novalidate>
+      <div>
+        <label for="session">Session</label>
+        <select id="session" name="sessionId" required></select>
+      </div>
+      <div>
+        <label for="alias">Attendee alias</label>
+        <input id="alias" name="attendeeAlias" autocomplete="off" required maxlength="200" aria-describedby="alias-hint">
+        <p class="hint" id="alias-hint">Fictional alias only. Leading/trailing spaces are ignored.</p>
+      </div>
+      <div>
+        <label for="key">Request key</label>
+        <input id="key" name="requestKey" autocomplete="off" required maxlength="200" aria-describedby="key-hint">
+        <p class="hint" id="key-hint">Kept until the booking succeeds, so a double-click or retry can never book twice.</p>
+      </div>
+      <div><button type="submit" id="reserve-btn">Reserve</button></div>
+    </form>
+    <div id="reserve-msg" class="msg" tabindex="-1" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="list-h">
+    <h2 id="list-h">Reservations</h2>
+    <form id="find-form" class="row" role="search">
+      <div>
+        <label for="find-alias">Find by attendee alias</label>
+        <input id="find-alias" autocomplete="off" placeholder="e.g. Ada (blank shows all)">
+      </div>
+      <div><button type="submit" class="secondary">Find</button></div>
+    </form>
+    <table style="margin-top:.75rem">
+      <caption class="sr-only">Reservations</caption>
+      <thead><tr><th scope="col">Alias</th><th scope="col">Session</th><th scope="col">Status</th><th scope="col">Reservation ID</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead>
+      <tbody id="res-body"><tr><td colspan="5">Loading…</td></tr></tbody>
+    </table>
+    <div id="list-msg" class="msg" tabindex="-1" aria-live="polite"></div>
+  </section>
+  <p class="hint" id="store-info"></p>
+</main>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const newKey = () => 'ui-' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+
+function show(el, text, kind) {
+  el.textContent = text; el.className = 'msg' + (text ? ' ' + kind : '');
+  if (kind === 'error') el.setAttribute('role', 'alert'); else el.setAttribute('role', 'status');
+}
+function errorText(body, status) {
+  const e = body && body.error;
+  if (!e) return 'Request failed (HTTP ' + status + ').';
+  return typeof e === 'string' ? e : (e.message || e.code || 'Request failed');
+}
+async function api(method, path, body) {
+  const res = await fetch(path, {method, headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store'});
+  let data = null;
+  try { data = await res.json(); } catch (_) { /* non-JSON */ }
+  return {ok: res.ok, status: res.status, data};
+}
+
+async function loadSessions() {
+  const r = await api('GET', '/sessions');
+  const body = $('sessions-body');
+  if (!r.ok || !r.data || !Array.isArray(r.data.sessions)) { body.innerHTML = ''; const tr = body.insertRow(); const td = tr.insertCell(); td.colSpan = 5; td.textContent = errorText(r.data, r.status); return; }
+  body.innerHTML = '';
+  const select = $('session'); const keep = select.value; select.innerHTML = '';
+  for (const s of r.data.sessions) {
+    const tr = body.insertRow(); tr.dataset.session = s.id;
+    tr.insertCell().textContent = s.id;
+    tr.insertCell().textContent = s.title;
+    for (const [v, k] of [[s.capacity, 'capacity'], [s.activeCount, 'active'], [s.remainingSeats, 'remaining']]) {
+      const td = tr.insertCell(); td.className = 'num'; td.dataset.field = k; td.textContent = v;
+      if (k === 'remaining' && v === 0) { td.classList.add('full'); td.textContent = '0 (full)'; }
+    }
+    const opt = new Option(s.id + ' · ' + s.title + ' (' + s.remainingSeats + ' left)', s.id);
+    select.add(opt);
+  }
+  if (keep) select.value = keep;
+  $('sessions-updated').textContent = 'Read from server at ' + new Date().toLocaleTimeString();
+}
+
+async function loadReservations() {
+  const alias = $('find-alias').value.trim();
+  const r = await api('GET', '/reservations' + (alias ? '?alias=' + encodeURIComponent(alias) : ''));
+  const body = $('res-body'); body.innerHTML = '';
+  if (!r.ok || !r.data || !Array.isArray(r.data.reservations)) { show($('list-msg'), errorText(r.data, r.status), 'error'); return; }
+  if (!r.data.reservations.length) {
+    const td = body.insertRow().insertCell(); td.colSpan = 5; td.textContent = alias ? 'No reservations for "' + alias + '".' : 'No reservations yet.'; return;
+  }
+  for (const res of r.data.reservations) {
+    const tr = body.insertRow();
+    tr.insertCell().textContent = res.attendeeAlias;
+    tr.insertCell().textContent = res.sessionId;
+    const st = tr.insertCell(); st.textContent = res.status; st.className = 'status-' + res.status;
+    const idc = tr.insertCell(); const code = document.createElement('code'); code.textContent = res.id; idc.appendChild(code);
+    const act = tr.insertCell();
+    if (res.status === 'active') {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'secondary';
+      b.textContent = 'Cancel'; b.setAttribute('aria-label', 'Cancel reservation for ' + res.attendeeAlias + ' in ' + res.sessionId);
+      b.addEventListener('click', () => cancelReservation(res, b));
+      act.appendChild(b);
+    }
+  }
+}
+
+async function loadHealth() {
+  const r = await api('GET', '/health');
+  if (r.ok) $('store-info').textContent = 'Store: ' + r.data.store + ' · server pid ' + r.data.pid + ' · ' + r.data.auditEntries + ' audited changes · last hash ' + String(r.data.lastAuditHash).slice(0, 12);
+}
+async function refresh() {
+  try {
+    await Promise.all([loadSessions(), loadReservations(), loadHealth()]);
+    show($('conn-msg'), '', '');
+  } catch (e) {
+    show($('conn-msg'), 'Cannot reach the server (' + e.message + '). Numbers on this page may be stale.', 'error');
+    $('sessions-updated').textContent = 'Last refresh failed at ' + new Date().toLocaleTimeString();
+  }
+}
+
+async function cancelReservation(res, button) {
+  button.disabled = true;
+  try {
+    const r = await api('POST', '/reservations/' + encodeURIComponent(res.id) + '/cancel', {});
+    if (r.ok) show($('list-msg'), 'Cancelled ' + r.data.attendeeAlias + ' in ' + r.data.sessionId + '. Server status: ' + r.data.status + '.', 'ok');
+    else show($('list-msg'), errorText(r.data, r.status), 'error');
+  } catch (e) { show($('list-msg'), 'Network error: ' + e.message + '. Nothing was changed on screen; refresh to check.', 'error'); }
+  await refresh();
+  $('list-msg').focus();
+}
+
+$('reserve-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = $('reserve-btn'); const msg = $('reserve-msg');
+  const payload = {sessionId: $('session').value, attendeeAlias: $('alias').value, requestKey: $('key').value};
+  $('alias').removeAttribute('aria-invalid');
+  if (!payload.attendeeAlias.trim()) { show(msg, 'Enter an attendee alias.', 'error'); $('alias').setAttribute('aria-invalid', 'true'); $('alias').setAttribute('aria-describedby', 'alias-hint reserve-msg'); $('alias').focus(); return; }
+  if (!payload.requestKey) { $('key').value = payload.requestKey = newKey(); }
+  btn.disabled = true; show(msg, 'Reserving…', 'ok');
+  try {
+    const r = await api('POST', '/reservations', payload);
+    if (r.ok) {
+      const replay = r.status === 200;
+      show(msg, (replay ? 'Already processed (same request key): ' : 'Reserved: ') + r.data.attendeeAlias + ' in ' + r.data.sessionId +
+        ', status ' + r.data.status + ', ID ' + r.data.id + '.', 'ok');
+      $('key').value = newKey(); $('alias').value = ''; $('find-alias').value = '';
+    } else {
+      show(msg, errorText(r.data, r.status), 'error');
+      msg.focus();
+    }
+  } catch (e) {
+    show(msg, 'Network error: ' + e.message + '. Retry keeps the same request key, so it cannot double-book.', 'error');
+  } finally { btn.disabled = false; }
+  await refresh();
+});
+$('refresh-btn').addEventListener('click', refresh);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+window.addEventListener('focus', refresh);
+$('find-form').addEventListener('submit', (ev) => { ev.preventDefault(); show($('list-msg'), '', ''); loadReservations(); });
+
+$('key').value = newKey();
+refresh();
+</script>
+</body>
+</html>
