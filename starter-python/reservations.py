@@ -22,6 +22,14 @@ def find_reservation(state: dict, reservation_id: str) -> dict | None:
     return next((r for r in state["reservations"] if r["id"] == reservation_id), None)
 
 
+def find_replay(state: dict, record: dict) -> dict | None:
+    """Pure: the stored reservation with the same key, session and alias as record, or None."""
+    return next((r for r in state["reservations"]
+                 if r["requestKey"] == record["requestKey"]
+                 and r["sessionId"] == record["sessionId"]
+                 and r["attendeeAlias"] == record["attendeeAlias"]), None)
+
+
 class CapacityFull(Exception):
     """Raised when a session has no remaining seats."""
 

@@ -56,16 +56,18 @@ class LoopbackHTTPServer(ThreadingHTTPServer):
         self.server_port = self.server_address[1]
 
 
-def reset_fixture():
-    marker = DATA / '.fixture-owner'
-    state_file = DATA / STATE_FILE
+def reset_fixture(data_dir: Path = DATA) -> Path:
+    """Reset only the marked fixture store in data_dir. Returns the state file path."""
+    data_dir = Path(data_dir)
+    marker = data_dir / '.fixture-owner'
+    state_file = data_dir / STATE_FILE
     if state_file.exists() and (not marker.exists() or marker.read_text() != MARKER):
         raise RuntimeError('Refusing to reset an unmarked state file. Choose a new DATA_DIR.')
-    DATA.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
     marker.write_text(MARKER)
     seed = json.loads((BASE / 'sessions.json').read_text())
     storage.save_state(state_file, {'sessions': seed, 'reservations': []})
-    print('Reset fixture:', state_file)
+    return state_file
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -113,9 +115,13 @@ class Handler(BaseHTTPRequestHandler):
                                                   body['attendeeAlias'], body['requestKey'])
             state_file = DATA / STATE_FILE
             with RESERVATION_LOCK:
+                state = storage.load_state(state_file)
+                replay = reservations.find_replay(state, record)
+                if replay is not None:
+                    self.json_response(200, replay)
+                    return
                 try:
-                    updated = reservations.add_active_reservation(
-                        storage.load_state(state_file), record)
+                    updated = reservations.add_active_reservation(state, record)
                 except reservations.CapacityFull as error:
                     self.json_response(409, {'error': {'code': 'CAPACITY_FULL',
                         'message': str(error)}})
@@ -132,7 +138,7 @@ def main():
     parser.add_argument('--reset', action='store_true', help='Reset only the marked fixture DATA_DIR')
     args = parser.parse_args()
     if args.reset:
-        reset_fixture()
+        print('Reset fixture:', reset_fixture(DATA))
         return
     if not (DATA / STATE_FILE).exists():
         parser.error('Run with --reset first, using the same DATA_DIR.')
