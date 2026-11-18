@@ -36,7 +36,7 @@ Reset refuses to touch a `seats.db` that lacks the fixture ownership marker. Use
 | `GET /reservations/{id}` | 200 reservation | 404 `UNKNOWN_RESERVATION` |
 | `POST /reservations/{id}/cancel` `{}` | 200 cancelled record (repeat cancellations return the same record) | 404 `UNKNOWN_RESERVATION`, 400 if the body is not a JSON object |
 | `GET /reservations?alias=Ada` (extra) | 200 `{"reservations":[...]}`; used by the UI's "find booking" box | none |
-| `GET /fonts/bricolage.woff2`, `/fonts/dm-sans.woff2` | the UI's two bundled fonts (exact whitelist; SIL OFL 1.1, see `static/fonts/OFL.txt`), so the UI needs no network | 404 for anything else |
+| `GET /fonts/*.woff2`, `/room.js`, `/vendor/three.module.min.js` | bundled UI assets on an exact whitelist: two fonts (SIL OFL 1.1, `static/fonts/OFL.txt`) and three.js r169 (MIT, `static/vendor/three.LICENSE.txt`), so the UI needs no network | 404 for anything else |
 | `GET /health` (extra) | 200 store path, server pid, number of audited changes, last audit hash | 503 `STORE_MISSING` |
 | Any other method or path | none | JSON 404 / 405; no HTML error pages anywhere |
 
@@ -52,20 +52,22 @@ Order of decisions in `POST /reservations`: validate input, then session exists 
 | --- | --- | --- |
 | `test_acceptance.py` (24 tests) | Black-box tests for AC-02 to AC-08: starts the real server as a subprocess, uses a fresh `DATA_DIR` per test, runs real restarts, 5 race batches of 10 threads, and reads SQLite directly | Written by a separate agent (AQE `qe-tdd-specialist`) instructed to work from the PRD only, without reading `app.py`. The brief is in the sidecar; independence is a process claim, not something this commit can prove |
 | `test_store_check.py` (6 tests) | `app.py --check` passes on a clean store and **fails** on 5 kinds of tampering: reactivated booking, ghost row, overbooking, alias edited in place, rewritten audit history | Negative controls for the checker itself |
-| `test_hardening.py` (12 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines, size limits, PRD-literal request keys | Each was reported as a defect by the reviewers before the fix (their reports are in the sidecar) |
+| `test_hardening.py` (13 tests) | Regression tests for issues found by our internal review (Fable) and an AQE chaos audit: invisible aliases, surrogates, deep JSON, non-object bodies, odd methods, bad request lines, size limits, PRD-literal request keys | Each was reported as a defect by the reviewers before the fix (their reports are in the sidecar) |
 | `tools/verify.py` (organizer) | API challenges for AC-02 to AC-08, including 10 concurrent batches and a real process restart | Organizer code, unmodified |
 
 Coverage was **not measured**, and we make no coverage claim. The sensitivity of the tests is shown with mutation testing (see the evidence manifest), not with a percentage.
 
 ## Beyond the PRD
 
-- **D1, a retry-safe booking UI.** The form keeps its request key until the server confirms success. A double-click, a timeout followed by a retry, or a resubmit therefore cannot book a second seat. The UI says "Already processed" on a replay. A "find by alias" box lets a helper locate an attendee's booking without knowing its ID.
+- **D1, "The Room": seat availability at a glance.** Above the session cards, a 3D room (three.js, procedural, no build step) shows each table with one chair per seat. Booked chairs are red with the attendee's name, free chairs are white, and a full table's lamp lights up. It is a *read-only second view*: it keeps no state, redraws only from `GET /sessions` + `GET /reservations` after every refresh, and never books anything. Clicking a chair only preselects that session in the labelled form and focuses the alias field, so keyboard users lose nothing. If WebGL is unavailable, the room stays hidden and the 2D app is unchanged. Respects `prefers-reduced-motion`. Demo: cancel with `curl`, refresh, and the chair empties.
+
+- **Also: a retry-safe booking UI.** The form keeps its request key until the server confirms success. A double-click, a timeout followed by a retry, or a resubmit therefore cannot book a second seat. The UI says "Already processed" on a replay. A "find by alias" box lets a helper locate an attendee's booking without knowing its ID.
 - **D2, independent store verification.** `python3 app.py --check` reads the database directly, not through HTTP. It checks that active ≤ capacity and that aliases are trimmed. It then replays the hash-chained `audit_log` (each entry hashes the full record and the previous hash) and requires the result to equal the reservations table exactly: session, alias, key and status. This catches ghost rows, silent reactivations and edited history that API counts alone cannot show. `test_store_check.py` proves the checker fails when it should.
 
 ## Known gaps and limits
 
 - Ten bounded race batches show that no overbooking occurred in those trials. They do not prove race freedom. Running two server processes on one `DATA_DIR` relies on SQLite `BEGIN IMMEDIATE` alone, since the thread lock is per process.
-- The UI was checked in Chromium on Linux only. No screen-reader test was done.
+- The UI was checked in Chromium on Linux only. No screen-reader test was done. The 3D room has no automated test of its pixels; its correctness rests on rendering only server data (see `static/room.js`) and on manual checks: a booking fills a chair, a curl cancel empties it after refresh, and with WebGL disabled the room hides.
 - Slow or stalled clients are disconnected after 15 s. The thread count is still unbounded under a flood of connections; this is a local fixture, not a hardened server.
 - `--check` assumes the audit log is written only by this app. Someone with write access to the file can recompute the chain, so it shows inconsistency, not tamper-proofing against an attacker.
 - Deliberate choices beyond the PRD: invisible-only aliases are treated as blank; 200-character limits on alias and key. Aliases differing only in invisible characters (for example `\u200bAda` and `Ada`) are different attendees, because comparisons are exact.

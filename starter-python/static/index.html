@@ -99,6 +99,9 @@
   .tag.cancelled { background: var(--white); color: var(--muted); border-color: var(--muted); text-decoration: line-through; }
   @media (max-width: 560px) { ul.res li { grid-template-columns: 1fr auto; } ul.res li .act { grid-column: 1 / -1; text-align: left; } }
 
+  .room { height: clamp(260px, 38vw, 420px); margin: 0 0 32px; background: var(--white); border: 2px solid var(--ink); box-shadow: var(--shadow);
+    background-image: radial-gradient(var(--line) 1.2px, transparent 1.2px); background-size: 22px 22px; }
+  .room canvas { display: block; width: 100%; height: 100%; }
   footer { margin-top: 56px; padding-top: 16px; border-top: 2px solid var(--ink); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font: 400 12px ui-monospace, Menlo, monospace; color: var(--muted); }
   footer span { overflow-wrap: anywhere; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -115,6 +118,8 @@
       <button type="button" class="btn ghost" id="refresh-btn">Refresh</button></div>
   </header>
   <div id="conn-msg" class="msg" tabindex="-1"></div>
+
+  <div class="room" id="room" hidden><canvas aria-hidden="true"></canvas></div>
 
   <section aria-labelledby="sessions-h">
     <h2 id="sessions-h" class="sr-only">Sessions</h2>
@@ -217,6 +222,7 @@ async function loadSessions() {
     lab.append(inp, el('span', null, s.id + (full ? ' · full' : '')));
     seg.push(lab);
   }
+  lastSessions = r.data.sessions;
   box.replaceChildren(...cards);
   const focusedSeg = document.activeElement && document.activeElement.name === 'sessionId';
   $('session-seg').replaceChildren(...seg);
@@ -253,9 +259,16 @@ async function loadHealth() {
   const r = await api('GET', '/health');
   if (r.ok) { $('store-info').title = r.data.store; $('store-info').textContent = String(r.data.store).split(/[\\/]/).pop() + ' · pid ' + r.data.pid + ' · ' + r.data.auditEntries + ' audited changes · ' + String(r.data.lastAuditHash).slice(0, 12); }
 }
+let room = null, lastSessions = null;
+async function paintRoom() {
+  if (!room || !lastSessions) return;
+  const r = await api('GET', '/reservations');  // unfiltered: the room shows everyone, independent of the search box
+  if (r.ok && r.data && Array.isArray(r.data.reservations)) room.render(lastSessions, r.data.reservations);
+}
 async function refresh() {
   try {
     await Promise.all([loadSessions(), loadReservations(), loadHealth()]);
+    await paintRoom();
     show($('conn-msg'), '', '');
   } catch (e) {
     show($('conn-msg'), 'Cannot reach the server (' + e.message + '). Numbers on this page may be stale.', 'error');
@@ -308,6 +321,25 @@ $('find-form').addEventListener('submit', (ev) => { ev.preventDefault(); show($(
 
 $('key').value = newKey();
 refresh();
+
+// Progressive enhancement: the 3D room loads after the 2D app and disappears silently if WebGL is unavailable.
+(async () => {
+  try {
+    const mod = await import('/room.js');
+    const holder = $('room');
+    holder.hidden = false;
+    room = mod.mount(holder, { onPick: (id) => {
+      selected = id;
+      const radio = $('session-seg').querySelector('input[value="' + CSS.escape(id) + '"]');
+      if (radio) radio.checked = true;
+      $('alias').focus();
+    } });
+    await paintRoom();
+  } catch (e) {
+    $('room').hidden = true; room = null;
+    console.info('3D room unavailable; 2D app unaffected:', e && e.message);
+  }
+})();
 </script>
 </body>
 </html>

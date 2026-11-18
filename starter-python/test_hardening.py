@@ -124,6 +124,18 @@ class HardeningTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assert_rejected('GET', path)
 
+    def test_3d_room_assets_served_as_javascript_and_never_cached(self):
+        for path in ('/room.js', '/vendor/three.module.min.js'):
+            with self.subTest(path=path):
+                req = urllib.request.Request(f'http://127.0.0.1:{self.port}{path}')
+                with urllib.request.urlopen(req, timeout=5) as r:
+                    self.assertEqual(r.status, 200)
+                    self.assertTrue(r.headers['Content-Type'].startswith('text/javascript'))
+                    self.assertEqual(r.headers['Cache-Control'], 'no-store')
+        for path in ('/vendor/three.LICENSE.txt', '/vendor/../app.py', '/static/room.js'):
+            with self.subTest(path=path):
+                self.assert_rejected('GET', path)
+
     def test_unknown_path_is_json_404(self):
         self.assert_rejected('GET', '/nope')
 
