@@ -10,7 +10,13 @@
   --line: #d9dee8;
   --danger-bg: #fdecec;
   --danger-ink: #8a1c1c;
-  --focus: #f0b429;
+  --focus: #8a5300;
+  --control-line: #76819a;
+}
+
+::selection {
+  background: #d6e0ff;
+  color: var(--ink);
 }
 
 * { box-sizing: border-box; }
@@ -84,7 +90,7 @@ select {
   font: inherit;
   color: var(--ink);
   background: #fff;
-  border: 1px solid #aab3c4;
+  border: 1px solid var(--control-line);
   border-radius: 6px;
 }
 
@@ -101,6 +107,28 @@ button {
 
 button:hover {
   filter: brightness(1.08);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: none;
+}
+
+#seat-counts:empty::before,
+#reservation-list:empty::before {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+#seat-counts:empty::before {
+  content: "No sessions to show.";
+}
+
+#reservation-list:empty::before {
+  content: "No reservations yet.";
 }
 
 button[type="submit"] {
