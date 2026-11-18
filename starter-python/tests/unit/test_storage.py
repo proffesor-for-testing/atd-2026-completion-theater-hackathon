@@ -1,4 +1,6 @@
 """Unit tests for storage.py: the local JSON state file (build-decisions.md)."""
+import logging
+
 import pytest
 
 import storage
@@ -46,3 +48,16 @@ def test_failed_save_leaves_old_file_and_no_temp_files(tmp_path, monkeypatch, br
 
     assert storage.load_state(path) == OLD_STATE
     assert sorted(p.name for p in tmp_path.iterdir()) == ["state.json"]
+
+
+def test_missing_file_loads_empty_state_and_logs_warning(tmp_path, caplog):
+    path = tmp_path / "absent.json"
+
+    with caplog.at_level(logging.WARNING, logger="storage"):
+        state = storage.load_state(path)
+
+    assert state == {"sessions": [], "reservations": []}
+    assert any(
+        r.levelno == logging.WARNING and "absent.json" in r.getMessage()
+        for r in caplog.records
+    )
