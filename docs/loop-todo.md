@@ -28,7 +28,8 @@ Steps are in order. Each one is a single test-first cycle.
 - [ ] AC-06: repeated cancellation reports cancelled and leaves the count unchanged
 - [ ] AC-06: replaying the original request after cancellation returns the cancelled record and does not reactivate it
 - [x] AC-07: active and cancelled reservations survive a restart without reset, read back over HTTP (covered by user ruling; the restart probe passed before any code change)
-- [ ] AC-08: unknown session, blank alias, missing key, malformed JSON and unknown cancel return non-success with a clear error and no state change
+- [x] AC-08: malformed JSON returns a 400 JSON error with no state change
+- [ ] AC-08: unknown reservation cancel returns a 4xx JSON error with no state change (test not yet written)
 - [ ] AC-08: the process stays available after each rejected request
 - [x] AC-08 (left after blank alias): unknown session and missing `requestKey` return a 4xx JSON error instead of dropping the connection
 - [x] Reject blank or whitespace-only aliases and trim before comparing (domain rule)

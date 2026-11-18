@@ -123,7 +123,13 @@ class Handler(BaseHTTPRequestHandler):
                 storage.save_state(state_file, updated)
             self.json_response(200, reservations.find_reservation(updated, reservation_id))
         elif self.path == '/reservations':
-            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))))
+            raw = self.rfile.read(int(self.headers.get('Content-Length', 0)))
+            try:
+                body = json.loads(raw)
+            except ValueError:
+                self.json_response(400, {'error': {'code': 'MALFORMED_JSON',
+                    'message': 'Request body must be valid JSON'}})
+                return
             if reservations.alias_is_blank(body['attendeeAlias']):
                 self.json_response(400, {'error': {'code': 'INVALID_ALIAS',
                     'message': 'Attendee alias must not be blank'}})
