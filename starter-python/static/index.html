@@ -1,8 +1,115 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Session Seat Desk: starter scaffold</title>
-<style>body{font:1.1rem system-ui;max-width:48rem;margin:3rem auto;padding:0 1rem;line-height:1.6}code{background:#eef1f6;padding:.2rem}h1{color:#101760}</style>
-<main><h1>Session Seat Desk</h1><p><strong>Scaffold only. The reservation app is not implemented.</strong></p>
-<p>Your team will build session readback, booking, request replay, cancellation, durable state and the UI described in the PRD.</p>
-<p>Replace this page with a labelled, keyboard-usable interface that shows actual API state. Do not turn sample text into a success claim.</p>
-<p>The health endpoint confirms only that this server is listening. It does not establish any acceptance criterion.</p></main></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session Seat Desk</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <h1>Session Seat Desk</h1>
+    <p class="tagline">Reserve and release seats for two fictional workshops. Every number on this page comes from the server.</p>
+  </header>
+
+  <main>
+    <section aria-labelledby="sessions-heading" class="panel">
+      <div class="panel-head">
+        <h2 id="sessions-heading">Sessions</h2>
+        <button type="button" id="refresh" class="ghost">Refresh from server</button>
+      </div>
+      <p id="sessions-loading" class="muted">Loading sessions…</p>
+      <ul id="session-list" class="session-grid" aria-live="polite"></ul>
+      <p class="muted small" id="last-sync" aria-live="off"></p>
+    </section>
+
+    <div class="two-col">
+      <section aria-labelledby="reserve-heading" class="panel tint-mint">
+        <h2 id="reserve-heading">Reserve a seat</h2>
+        <form id="reserve-form" novalidate>
+          <div class="field">
+            <label for="session-select">Session</label>
+            <select id="session-select" name="sessionId" required></select>
+          </div>
+          <div class="field">
+            <label for="alias-input">Attendee alias</label>
+            <input id="alias-input" name="attendeeAlias" type="text" maxlength="64" autocomplete="off"
+                   required aria-describedby="alias-hint">
+            <p id="alias-hint" class="hint">A fictional name only. Spaces at either end are trimmed.</p>
+          </div>
+          <div class="field">
+            <label for="key-input">Request key</label>
+            <div class="inline">
+              <input id="key-input" name="requestKey" type="text" maxlength="128" autocomplete="off"
+                     required aria-describedby="key-hint">
+              <button type="button" id="new-key" class="ghost">New key</button>
+            </div>
+            <p id="key-hint" class="hint">Sending the same key again returns the same reservation instead of booking twice.</p>
+          </div>
+          <button type="submit" id="reserve-button" class="primary">Reserve seat</button>
+        </form>
+      </section>
+
+      <section aria-labelledby="lookup-heading" class="panel tint-blue">
+        <h2 id="lookup-heading">Look up a reservation</h2>
+        <form id="lookup-form" novalidate>
+          <div class="field">
+            <label for="lookup-input">Reservation ID</label>
+            <input id="lookup-input" name="reservationId" type="text" maxlength="64" autocomplete="off" required>
+          </div>
+          <button type="submit" class="primary">Look up</button>
+        </form>
+        <dl id="lookup-result" class="record" hidden></dl>
+      </section>
+    </div>
+
+    <div id="status" class="toast" role="status" aria-live="polite"></div>
+    <div id="alert" class="toast error" role="alert"></div>
+
+    <section aria-labelledby="reservations-heading" class="panel">
+      <div class="panel-head">
+        <h2 id="reservations-heading" tabindex="-1">Reservations</h2>
+        <div class="filters" role="group" aria-label="Filter reservations">
+          <label for="filter-session">Filter by session</label>
+          <select id="filter-session">
+            <option value="">All sessions</option>
+          </select>
+          <label for="filter-status">Filter by status</label>
+          <select id="filter-status">
+            <option value="">Any status</option>
+            <option value="active">Active</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <p id="empty-reservations" class="muted">No reservations yet.</p>
+      <div class="table-wrap">
+        <table id="reservation-table" hidden>
+          <caption class="visually-hidden">Reservations stored on the server</caption>
+          <thead>
+            <tr><th scope="col">Alias</th><th scope="col">Session</th><th scope="col">Status</th>
+                <th scope="col">Request key</th><th scope="col">Reservation ID</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+          </thead>
+          <tbody id="reservation-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="cancel-dialog" aria-labelledby="cancel-title" aria-describedby="cancel-text">
+    <form method="dialog">
+      <h2 id="cancel-title">Cancel this reservation?</h2>
+      <p id="cancel-text"></p>
+      <p class="hint">A cancelled reservation cannot be reactivated. A new booking needs a new request key.</p>
+      <div class="inline end">
+        <button value="keep" class="ghost" autofocus>Keep reservation</button>
+        <button value="confirm" class="danger" id="confirm-cancel">Cancel reservation</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="muted small">Fixture data only — use fictional aliases. State lives in the server's SQLite file and survives a restart.</footer>
+</body>
+</html>

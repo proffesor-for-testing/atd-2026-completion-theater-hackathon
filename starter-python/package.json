@@ -1,0 +1,19 @@
+{
+  "name": "session-seat-desk-tests",
+  "private": true,
+  "description": "Playwright API, security and UI tests for Session Seat Desk. Test-only: the app itself needs no npm install.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=ui",
+    "typecheck": "tsc --noEmit",
+    "gate": "npm run typecheck && playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}
