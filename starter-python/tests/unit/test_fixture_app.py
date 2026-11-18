@@ -19,7 +19,7 @@ def test_reset_creates_marked_fixture_database_in_its_own_data_dir(tmp_path):
 
     instance.reset()
 
-    assert (instance.data_dir / "seats.db").exists()
+    assert (instance.data_dir / "state.json").exists()
     assert (instance.data_dir / ".fixture-owner").exists()
 
 

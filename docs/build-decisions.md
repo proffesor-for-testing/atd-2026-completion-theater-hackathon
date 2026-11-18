@@ -38,9 +38,8 @@ Commands, from `starter-python/`:
 - App directory: `starter-python/` (declared app directory for submission).
 - Acceptance criteria: `docs/acceptance-criteria.md`.
 - Fixture state: under `DATA_DIR` only. Never the repository root or a real database.
+- State file: `DATA_DIR/state.json`, written and read only through `storage.py`. The fixture owner marker is `DATA_DIR/.fixture-owner`. The SQLite scaffold (`seats.db`) is removed.
 
 ## Open
-
-- The state file is JSON (`storage.py`), but the `app.py` scaffold still creates and reads SQLite (`seats.db`). The integration tests assume `DATA_DIR/state.json`. Decide which one the app uses before the reservation endpoints are built.
 
 - Whether the UI check is automated (for example, a simple HTML and DOM test) or manual with recorded steps.

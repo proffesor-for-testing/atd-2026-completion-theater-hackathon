@@ -4,14 +4,13 @@ Implement the PRD endpoints and browser behavior during the hackathon.
 Run --reset explicitly before serving. Only this marked fixture store is reset.
 """
 import argparse
-from contextlib import closing
 import json
 import os
 from pathlib import Path
-import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from socketserver import TCPServer
 
+import storage
 import ui
 
 BASE = Path(__file__).resolve().parent
@@ -19,18 +18,29 @@ DATA = Path(os.environ.get('DATA_DIR', str(BASE / '.state'))).resolve()
 MARKER = 'session-seat-desk-disposable-fixture-v1'
 
 
+STATE_FILE = 'state.json'
+
+
+def active_count(state, session_id):
+    """Pure: active reservations for one session."""
+    return sum(1 for r in state['reservations']
+               if r['sessionId'] == session_id and r['status'] == 'active')
+
+
+def session_views(state):
+    """Pure: stored state -> session records in API shape."""
+    views = []
+    for session in state['sessions']:
+        active = active_count(state, session['id'])
+        views.append({'id': session['id'], 'title': session['title'],
+                      'capacity': session['capacity'], 'activeCount': active,
+                      'remainingSeats': session['capacity'] - active})
+    return views
+
+
 def read_sessions():
-    """Session records in API shape, read from the fixture database."""
-    with closing(sqlite3.connect(DATA / 'seats.db')) as connection:
-        rows = connection.execute('''
-            SELECT s.id, s.title, s.capacity, COUNT(r.id)
-            FROM sessions s
-            LEFT JOIN reservations r ON r.session_id = s.id AND r.status = 'active'
-            GROUP BY s.id ORDER BY s.id
-        ''').fetchall()
-    return [{'id': sid, 'title': title, 'capacity': capacity, 'activeCount': active,
-             'remainingSeats': capacity - active}
-            for sid, title, capacity, active in rows]
+    """Session records in API shape, read from the fixture state file."""
+    return session_views(storage.load_state(DATA / STATE_FILE))
 
 
 class LoopbackHTTPServer(ThreadingHTTPServer):
@@ -43,25 +53,14 @@ class LoopbackHTTPServer(ThreadingHTTPServer):
 
 def reset_fixture():
     marker = DATA / '.fixture-owner'
-    db = DATA / 'seats.db'
-    if db.exists() and (not marker.exists() or marker.read_text() != MARKER):
-        raise RuntimeError('Refusing to reset an unmarked database. Choose a new DATA_DIR.')
+    state_file = DATA / STATE_FILE
+    if state_file.exists() and (not marker.exists() or marker.read_text() != MARKER):
+        raise RuntimeError('Refusing to reset an unmarked state file. Choose a new DATA_DIR.')
     DATA.mkdir(parents=True, exist_ok=True)
     marker.write_text(MARKER)
-    with closing(sqlite3.connect(db)) as connection, connection:
-        connection.executescript('''
-            CREATE TABLE IF NOT EXISTS sessions (
-              id TEXT PRIMARY KEY, title TEXT NOT NULL, capacity INTEGER NOT NULL);
-            CREATE TABLE IF NOT EXISTS reservations (
-              id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
-              attendee_alias TEXT NOT NULL, request_key TEXT NOT NULL UNIQUE,
-              status TEXT NOT NULL CHECK (status IN ('active','cancelled')));
-            DELETE FROM reservations;
-            DELETE FROM sessions;
-        ''')
-        seed = json.loads((BASE / 'sessions.json').read_text())
-        connection.executemany('INSERT INTO sessions VALUES (:id,:title,:capacity)', seed)
-    print('Reset fixture:', db)
+    seed = json.loads((BASE / 'sessions.json').read_text())
+    storage.save_state(state_file, {'sessions': seed, 'reservations': []})
+    print('Reset fixture:', state_file)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -101,7 +100,7 @@ def main():
     if args.reset:
         reset_fixture()
         return
-    if not (DATA / 'seats.db').exists():
+    if not (DATA / STATE_FILE).exists():
         parser.error('Run with --reset first, using the same DATA_DIR.')
     server = LoopbackHTTPServer(('127.0.0.1', int(os.environ.get('PORT', '8765'))), Handler)
     print('Scaffold only. Open http://127.0.0.1:%s' % server.server_port, flush=True)
