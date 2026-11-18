@@ -10,8 +10,10 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from socketserver import TCPServer
 
+import reservations
 import storage
 import ui
+import uuid
 
 BASE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('DATA_DIR', str(BASE / '.state'))).resolve()
@@ -93,8 +95,17 @@ class Handler(BaseHTTPRequestHandler):
                 'message': 'Implement the PRD read endpoints in your team copy.'}})
 
     def do_POST(self):
-        self.json_response(501, {'error': {'code': 'NOT_IMPLEMENTED',
-            'message': 'Implement reservation and cancellation in your team copy.'}})
+        if self.path == '/reservations':
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))))
+            record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
+                                                  body['attendeeAlias'], body['requestKey'])
+            state_file = DATA / STATE_FILE
+            storage.save_state(state_file, reservations.add_reservation(
+                storage.load_state(state_file), record))
+            self.json_response(201, record)
+        else:
+            self.json_response(501, {'error': {'code': 'NOT_IMPLEMENTED',
+                'message': 'Implement reservation and cancellation in your team copy.'}})
 
 
 def main():
