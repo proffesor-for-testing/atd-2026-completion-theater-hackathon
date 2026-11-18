@@ -1,8 +1,114 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Session Seat Desk: starter scaffold</title>
-<style>body{font:1.1rem system-ui;max-width:48rem;margin:3rem auto;padding:0 1rem;line-height:1.6}code{background:#eef1f6;padding:.2rem}h1{color:#101760}</style>
-<main><h1>Session Seat Desk</h1><p><strong>Scaffold only. The reservation app is not implemented.</strong></p>
-<p>Your team will build session readback, booking, request replay, cancellation, durable state and the UI described in the PRD.</p>
-<p>Replace this page with a labelled, keyboard-usable interface that shows actual API state. Do not turn sample text into a success claim.</p>
-<p>The health endpoint confirms only that this server is listening. It does not establish any acceptance criterion.</p></main></html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Seat Desk</title>
+<style>
+:root{color-scheme:light;--navy:#101760;--ink:#182238;--muted:#536078;--line:#d7deeb;--accent:#c52157}
+*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1080px;margin:auto;padding:30px 20px 54px}header{border-top:5px solid var(--accent);background:white;border-bottom:1px solid var(--line)}header>div{max-width:1080px;padding:28px 20px;margin:auto}.eyebrow{font-size:12px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}h1{font-size:clamp(28px,5vw,42px);line-height:1.15;letter-spacing:-.03em;color:var(--navy);margin:8px 0}h2{font-size:22px;color:var(--navy);margin:0 0 14px}h3{font-size:19px;line-height:1.25;color:var(--navy);margin:8px 0 16px}p{margin:0 0 12px}.muted,.help{color:var(--muted);font-size:14px}.help{margin:7px 0 12px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.section-head h2{margin:0}.sessions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:26px}.session,.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:22px;min-width:0}.session-id{font-size:12px;letter-spacing:.08em;font-weight:750;color:var(--muted)}.counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}.counts dt{font-size:12px;color:var(--muted)}.counts dd{font-size:25px;font-weight:750;color:var(--navy);margin:0}.workspace{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}.workspace>*{min-width:0}.side{display:grid;gap:20px;min-width:0}label{display:block;font-weight:650;font-size:14px;margin:15px 0 6px}input,select,button{font:inherit}input,select{display:block;width:100%;min-width:0;padding:11px 12px;border:1px solid #aab6cb;border-radius:7px;background:white;color:var(--ink)}button{border:1px solid var(--navy);border-radius:7px;padding:10px 14px;background:var(--navy);color:white;font-weight:650;cursor:pointer}button.secondary{background:white;color:var(--navy)}button.cancel{background:white;color:#8b123b;border-color:#b52554}button:disabled{cursor:wait;opacity:.6}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid #dc8d13;outline-offset:3px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.key-row{display:flex;gap:8px;align-items:stretch}.key-row input{flex:1;min-width:0}.key-row button{flex:none}.notice{border-radius:8px;padding:13px 16px;margin:0 0 18px;overflow-wrap:anywhere}.error{border:1px solid #d29bab;background:#fff0f3;color:#7c1735}.status{border:1px solid #a6c4b3;background:#eff8f2;color:#17482b}.record{margin:0}.record>div{padding:9px 0;border-bottom:1px solid var(--line)}.record dt{font-size:12px;color:var(--muted);font-weight:650}.record dd{margin:3px 0 0;overflow-wrap:anywhere}.record-id{font:14px ui-monospace,SFMono-Regular,Consolas,monospace}.badge{display:inline-block;padding:3px 9px;border-radius:5px;background:#eaf1ed;color:#19462b;font-size:13px;font-weight:750}.badge.cancelled{background:#f2eaf0;color:#71304e}footer{margin-top:28px;font-size:13px;color:var(--muted)}[hidden]{display:none!important}noscript{display:block;margin:20px;padding:15px;background:#fff0f3;color:#7c1735}@media(max-width:720px){.workspace,.sessions{grid-template-columns:minmax(0,1fr)}main{padding:22px 16px 36px}.panel,.session{padding:18px}.section-head{align-items:start}.key-row{flex-wrap:wrap}.key-row input{flex-basis:100%}.counts dd{font-size:23px}}
+</style>
+</head>
+<body>
+<header><div><div class="eyebrow">Local workshop reservations</div><h1>Session Seat Desk</h1><p class="muted">See available seats, reserve a place and manage a reservation. Use fictional attendee aliases only.</p></div></header>
+<noscript>This interface needs JavaScript. The local JSON API remains available through the documented endpoints.</noscript>
+<main>
+<div id="error" class="notice error" role="alert" tabindex="-1" hidden></div>
+<div id="status" class="notice status" role="status" aria-live="polite" hidden></div>
+<section aria-labelledby="sessions-heading"><div class="section-head"><h2 id="sessions-heading">Workshops</h2><button id="refresh" class="secondary" type="button">Refresh seats</button></div><div id="sessions" class="sessions" aria-live="polite"><p class="muted">Loading session availability…</p></div></section>
+<div class="workspace">
+<section class="panel" aria-labelledby="reserve-heading"><h2 id="reserve-heading">Reserve a seat</h2><p class="muted">The server confirms every booking and stores its reservation ID.</p>
+<form id="reserve-form">
+<label for="session">Workshop</label><select id="session" name="sessionId" required disabled><option value="">Loading workshops…</option></select>
+<label for="alias">Fictional attendee alias</label><input id="alias" name="attendeeAlias" autocomplete="off" placeholder="For example, Ada" required>
+<label for="key">Request key</label><div class="key-row"><input id="key" name="requestKey" autocomplete="off" spellcheck="false" aria-describedby="key-help" required><button id="new-key" class="secondary" type="button">New key</button></div>
+<p id="key-help" class="help">Keep the same key, workshop and alias to retry safely. Choose a new key for a new reservation. Replaying a cancelled request keeps it cancelled.</p><div class="actions"><button id="reserve-button" type="submit" disabled>Reserve seat</button></div>
+</form></section>
+<div class="side">
+<section class="panel" aria-labelledby="lookup-heading"><h2 id="lookup-heading">Find a reservation</h2><p class="muted">Use a saved ID to read its current stored status, including after restarting the app.</p><form id="lookup-form"><label for="lookup-id">Reservation ID</label><input id="lookup-id" autocomplete="off" spellcheck="false" required><div class="actions"><button id="lookup-button" class="secondary" type="submit">Look up reservation</button></div></form></section>
+<section id="record-section" class="panel" aria-labelledby="record-heading" hidden><h2 id="record-heading" tabindex="-1">Reservation record</h2><dl class="record">
+<div><dt>Reservation ID</dt><dd id="record-id" class="record-id"></dd></div><div><dt>Workshop</dt><dd id="record-session"></dd></div><div><dt>Attendee alias</dt><dd id="record-alias"></dd></div><div><dt>Request key</dt><dd id="record-key" class="record-id"></dd></div><div><dt>Status</dt><dd><span id="record-status" class="badge"></span></dd></div>
+</dl><div class="actions"><button id="cancel-button" class="cancel" type="button">Cancel reservation</button><button id="reuse-button" class="secondary" type="button">Load original request</button></div><p class="help">Cancellation releases a seat once. The reservation and its request key remain stored.</p></section>
+</div></div>
+<footer>Availability comes from the local API. Refresh seats to read changes made by another browser or API client. Reset is an explicit command in the README.</footer>
+</main>
+<script>
+'use strict';
+const el = id => document.getElementById(id);
+let currentRecord = null, loaded = false, busy = false;
+function freshKey() { return 'K-' + (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)); }
+function announce(message) { el('status').textContent = message; el('status').hidden = false; }
+function showError(message) { el('error').textContent = message; el('error').hidden = false; el('error').focus(); }
+function controls() {
+  ['refresh','new-key','lookup-button','cancel-button','reuse-button'].forEach(id => { el(id).disabled = busy; });
+  el('reserve-button').disabled = busy || !loaded; el('session').disabled = busy || !loaded;
+}
+async function request(path, options = {}) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(path, {...options, cache:'no-store', signal:controller.signal, headers:{Accept:'application/json', ...(options.body ? {'Content-Type':'application/json'} : {})}});
+    let data; try { data = await response.json(); } catch (_) { throw new Error('The server returned an unreadable response. Keep the same request key when retrying.'); }
+    if (!response.ok) { const detail = typeof data.error === 'string' ? data.error : data.error && data.error.message; throw new Error(detail || 'The server rejected this request (HTTP ' + response.status + ').'); }
+    return data;
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('The request timed out. Keep the same request key when retrying.');
+    if (error instanceof TypeError) throw new Error('Cannot reach the local server. Check that it is running; keep the same request key when retrying.');
+    throw error;
+  } finally { clearTimeout(timer); }
+}
+function node(tag, text, className) { const item = document.createElement(tag); item.textContent = text; if (className) item.className = className; return item; }
+async function refreshSessions() {
+  const data = await request('/sessions'), selected = el('session').value, cards = document.createDocumentFragment(), options = document.createDocumentFragment();
+  for (const session of data.sessions) {
+    const card = node('article', '', 'session'); card.append(node('div', session.id, 'session-id'), node('h3', session.title));
+    const counts = node('dl', '', 'counts');
+    for (const [label, value] of [['Capacity', session.capacity], ['Active', session.activeCount], ['Remaining', session.remainingSeats]]) { const group = document.createElement('div'); group.append(node('dt', label), node('dd', value)); counts.append(group); }
+    card.append(counts); cards.append(card);
+    const option = node('option', session.id + ' · ' + session.title + ' (' + session.remainingSeats + ' remaining)'); option.value = session.id; options.append(option);
+  }
+  el('sessions').replaceChildren(cards); el('session').replaceChildren(options);
+  if ([...el('session').options].some(option => option.value === selected)) el('session').value = selected;
+  loaded = true; controls();
+}
+function displayRecord(record) {
+  currentRecord = record;
+  for (const [target, field] of [['record-id','id'],['record-session','sessionId'],['record-alias','attendeeAlias'],['record-key','requestKey'],['record-status','status']]) el(target).textContent = record[field];
+  el('record-status').className = 'badge' + (record.status === 'cancelled' ? ' cancelled' : '');
+  el('cancel-button').textContent = record.status === 'cancelled' ? 'Confirm cancellation again' : 'Cancel reservation';
+  el('lookup-id').value = record.id; el('record-section').hidden = false;
+}
+async function action(work) {
+  if (busy) return;
+  busy = true; el('error').hidden = true; el('status').hidden = true; controls();
+  try { await work(); } catch (error) { showError(error.message); } finally { busy = false; controls(); }
+}
+el('reserve-form').addEventListener('submit', event => {
+  event.preventDefault(); action(async () => {
+    if (!el('alias').value.trim()) throw new Error('Enter a fictional alias that is not blank.');
+    const record = await request('/reservations', {method:'POST', body:JSON.stringify({sessionId:el('session').value, attendeeAlias:el('alias').value, requestKey:el('key').value})});
+    displayRecord(record); announce('Reservation ' + record.id + ' is ' + record.status + '. Save this ID for later lookup.');
+    await refreshSessions(); el('record-heading').focus();
+  });
+});
+el('lookup-form').addEventListener('submit', event => {
+  event.preventDefault(); action(async () => {
+    const id = el('lookup-id').value.trim(); if (!id) throw new Error('Enter a reservation ID.');
+    const record = await request('/reservations/' + encodeURIComponent(id)); displayRecord(record); await refreshSessions();
+    announce('Stored reservation ' + record.id + ' is ' + record.status + '.'); el('record-heading').focus();
+  });
+});
+el('cancel-button').addEventListener('click', () => action(async () => {
+  if (!currentRecord) return;
+  const record = await request('/reservations/' + encodeURIComponent(currentRecord.id) + '/cancel', {method:'POST', body:'{}'});
+  displayRecord(record); announce('Reservation ' + record.id + ' is cancelled. Repeating cancellation releases no additional seat.'); await refreshSessions();
+}));
+el('reuse-button').addEventListener('click', () => {
+  if (!currentRecord) return;
+  el('session').value = currentRecord.sessionId; el('alias').value = currentRecord.attendeeAlias; el('key').value = currentRecord.requestKey;
+  announce('Original request loaded. Reserve seat will replay this same reservation and its current status.'); el('reserve-button').focus();
+});
+el('refresh').addEventListener('click', () => action(async () => { await refreshSessions(); announce('Seat counts refreshed from the server.'); }));
+el('new-key').addEventListener('click', () => { el('key').value = freshKey(); announce('New request key generated. Use this for a new reservation.'); el('key').focus(); });
+el('key').value = freshKey(); action(refreshSessions);
+</script>
+</body>
+</html>
