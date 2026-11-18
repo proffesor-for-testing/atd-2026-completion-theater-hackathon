@@ -1,6 +1,11 @@
 """Pure reservation logic: state in, state out. No I/O."""
 
 
+def alias_is_blank(alias: str) -> bool:
+    """Pure: true when the alias is empty or only whitespace."""
+    return alias.strip() == ""
+
+
 def new_reservation(reservation_id: str, session_id: str, alias: str, request_key: str) -> dict:
     """Pure: the stored record for a new active reservation."""
     return {
