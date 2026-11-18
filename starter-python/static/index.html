@@ -265,7 +265,7 @@ function setDrawer(open) {
 const SVG = 'http://www.w3.org/2000/svg';
 const PALETTE = ['#ffd21f', '#e3262f', '#1e7bff', '#2db665', '#ff8a1e', '#c6f01e', '#fff6da', '#b9a7ff'];
 function hash(str) { let h = 2166136261; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
-function avatar(alias, size) {
+function avatar(alias, size, sad = false) {
   const h = hash(alias);
   const pick = (n, shift) => (h >>> shift) % n;
   const bg = PALETTE[pick(PALETTE.length, 0)];
@@ -286,8 +286,12 @@ function avatar(alias, size) {
   }
   const mouth = pick(4, 9), my = 42 + pick(3, 11);
   const m = { fill: 'none', stroke: face, 'stroke-width': 3, 'stroke-linecap': 'round' };
+  if (sad) {
+    add('path', { d: `M22 ${my + 5} q10 -9 20 0`, ...m });
+    add('path', { d: `M${32 + gap} ${eyeY + 5} q-2.5 5 0 7 q2.5 -2 0 -7 z`, fill: '#1e7bff', stroke: ink, 'stroke-width': 1 });
+  }
   // every mouth is a smile, just in different styles (no flat, wavy or 'o' mouths: they read as sad)
-  if (mouth === 0) add('path', { d: `M22 ${my} q10 9 20 0`, ...m });
+  else if (mouth === 0) add('path', { d: `M22 ${my} q10 9 20 0`, ...m });
   else if (mouth === 1) add('path', { d: `M21 ${my - 1} q11 12 22 0 z`, fill: face, stroke: face, 'stroke-width': 2, 'stroke-linejoin': 'round' });
   else if (mouth === 2) add('path', { d: `M25 ${my} q7 6 14 0`, ...m });
   else { add('path', { d: `M21 ${my - 1} q11 12 22 0 z`, fill: face, stroke: face, 'stroke-width': 2, 'stroke-linejoin': 'round' }); add('circle', { cx: 32, cy: my + 4, r: 2.6, fill: '#e3262f' }); }
@@ -483,7 +487,7 @@ refresh();
     holder.hidden = false;
     holder.dataset.fit = 'full';
     document.body.classList.add('immersive');
-    room = mod.mount(holder, { onLayout: hangCards, onPerson: (alias) => openProfile(alias), avatar: (alias) => { const s = avatar(alias, 128); s.setAttribute('xmlns', SVG); return { color: PALETTE[hash(alias) % PALETTE.length], svg: new XMLSerializer().serializeToString(s) }; }, onPick: (id) => {
+    room = mod.mount(holder, { onLayout: hangCards, onPerson: (alias) => openProfile(alias), avatar: (alias, sad) => { const s = avatar(alias, 128, !!sad); s.setAttribute('xmlns', SVG); return { color: PALETTE[hash(alias) % PALETTE.length], svg: new XMLSerializer().serializeToString(s) }; }, onPick: (id) => {
       selected = id;
       const radio = $('session-seg').querySelector('input[value="' + CSS.escape(id) + '"]');
       if (radio) radio.checked = true;

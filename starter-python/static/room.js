@@ -112,7 +112,7 @@ function person(alias, color, svgMarkup, redraw) {
   tag.scale.set(0.24 * tagT.aspect, 0.24, 1); tag.position.y = 1.36; tag.renderOrder = 20;
   g.add(face, tag);
   bodies.push(body.body.material);
-  return { group: g, body, bodies, fade: [body.body.material, body.line.material, face.material, tag.material, ...fadeExtra] };
+  return { group: g, body, bodies, face, fade: [body.body.material, body.line.material, face.material, tag.material, ...fadeExtra] };
 }
 
 export function mount(container, { onPick, onPerson, avatar, onLayout } = {}) {
@@ -255,6 +255,7 @@ export function mount(container, { onPick, onPerson, avatar, onLayout } = {}) {
   function ghostAway(p, root) {
     const g = p.group, y0 = g.position.y, x0 = g.position.x, start = performance.now();
     for (const m of p.bodies) m.color.set(0xd9d4ca);
+    if (avatar) { const old = p.face.material.map; p.face.material.map = svgTexture(avatar(p.alias, true).svg, kick); old.dispose(); }
     animate((now) => {
       const k = Math.min(1, (now - start) / 1500), e = 1 - Math.pow(1 - k, 2);
       g.position.y = y0 + e * 2.6;
