@@ -1,0 +1,4 @@
+# Test dependencies only. The app itself is standard library Python 3.11+.
+# pytest.ini passes "-n auto", so pytest-xdist is required.
+pytest==9.2.0
+pytest-xdist==3.8.0

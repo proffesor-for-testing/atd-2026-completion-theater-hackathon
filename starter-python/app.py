@@ -4,48 +4,70 @@ Implement the PRD endpoints and browser behavior during the hackathon.
 Run --reset explicitly before serving. Only this marked fixture store is reset.
 """
 import argparse
-from contextlib import closing
 import json
 import os
+import threading
 from pathlib import Path
-import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from socketserver import TCPServer
+
+import reservations
+import storage
+import ui
+import uuid
 
 BASE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('DATA_DIR', str(BASE / '.state'))).resolve()
 MARKER = 'session-seat-desk-disposable-fixture-v1'
 
 
+STATE_FILE = 'state.json'
+RESERVATION_LOCK = threading.Lock()  # serialises capacity check and save
+
+
+def active_count(state, session_id):
+    """Pure: active reservations for one session."""
+    return sum(1 for r in state['reservations']
+               if r['sessionId'] == session_id and r['status'] == 'active')
+
+
+def session_views(state):
+    """Pure: stored state -> session records in API shape."""
+    views = []
+    for session in state['sessions']:
+        active = active_count(state, session['id'])
+        views.append({'id': session['id'], 'title': session['title'],
+                      'capacity': session['capacity'], 'activeCount': active,
+                      'remainingSeats': session['capacity'] - active})
+    return views
+
+
+def read_sessions():
+    """Session records in API shape, read from the fixture state file."""
+    return session_views(storage.load_state(DATA / STATE_FILE))
+
+
 class LoopbackHTTPServer(ThreadingHTTPServer):
     """Local transport does not need HTTPServer's reverse-DNS lookup."""
+    request_queue_size = 64  # default backlog of 5 resets simultaneous connections
     def server_bind(self):
         TCPServer.server_bind(self)
         self.server_name = 'localhost'
         self.server_port = self.server_address[1]
 
 
-def reset_fixture():
-    marker = DATA / '.fixture-owner'
-    db = DATA / 'seats.db'
-    if db.exists() and (not marker.exists() or marker.read_text() != MARKER):
-        raise RuntimeError('Refusing to reset an unmarked database. Choose a new DATA_DIR.')
-    DATA.mkdir(parents=True, exist_ok=True)
+def reset_fixture(data_dir: Path = DATA) -> Path:
+    """Reset only the marked fixture store in data_dir. Returns the state file path."""
+    data_dir = Path(data_dir)
+    marker = data_dir / '.fixture-owner'
+    state_file = data_dir / STATE_FILE
+    if state_file.exists() and (not marker.exists() or marker.read_text() != MARKER):
+        raise RuntimeError('Refusing to reset an unmarked state file. Choose a new DATA_DIR.')
+    data_dir.mkdir(parents=True, exist_ok=True)
     marker.write_text(MARKER)
-    with closing(sqlite3.connect(db)) as connection, connection:
-        connection.executescript('''
-            CREATE TABLE IF NOT EXISTS sessions (
-              id TEXT PRIMARY KEY, title TEXT NOT NULL, capacity INTEGER NOT NULL);
-            CREATE TABLE IF NOT EXISTS reservations (
-              id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
-              attendee_alias TEXT NOT NULL, request_key TEXT NOT NULL UNIQUE,
-              status TEXT NOT NULL CHECK (status IN ('active','cancelled')));
-            DELETE FROM reservations;
-            DELETE FROM sessions;
-        ''')
-        seed = json.loads((BASE / 'sessions.json').read_text())
-        connection.executemany('INSERT INTO sessions VALUES (:id,:title,:capacity)', seed)
-    print('Reset fixture:', db)
+    seed = json.loads((BASE / 'sessions.json').read_text())
+    storage.save_state(state_file, {'sessions': seed, 'reservations': []})
+    return state_file
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -60,8 +82,30 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
             self.json_response(200, {'status': 'scaffold', 'implemented': False})
+        elif self.path == '/sessions':
+            try:
+                self.json_response(200, {'sessions': read_sessions()})
+            except ValueError:
+                self.json_response(500, {'error': {'code': 'STATE_CORRUPT',
+                    'message': 'State file %s is corrupt; refusing to load it' % (DATA / STATE_FILE)}})
+        elif self.path.startswith('/reservations/'):
+            reservation_id = self.path[len('/reservations/'):]
+            record = reservations.find_reservation(
+                storage.load_state(DATA / STATE_FILE), reservation_id)
+            if record is None:
+                self.json_response(404, {'error': {'code': 'NOT_FOUND',
+                    'message': 'No reservation with ID %s' % reservation_id}})
+            else:
+                self.json_response(200, record)
+        elif self.path == '/static/style.css':
+            payload = (BASE / 'static' / 'style.css').read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/css; charset=utf-8')
+            self.send_header('Content-Length', str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
         elif self.path == '/':
-            payload = (BASE / 'static' / 'index.html').read_bytes()
+            payload = ui.render_page(read_sessions()).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(payload)))
@@ -72,8 +116,64 @@ class Handler(BaseHTTPRequestHandler):
                 'message': 'Implement the PRD read endpoints in your team copy.'}})
 
     def do_POST(self):
-        self.json_response(501, {'error': {'code': 'NOT_IMPLEMENTED',
-            'message': 'Implement reservation and cancellation in your team copy.'}})
+        if self.path.startswith('/reservations/') and self.path.endswith('/cancel'):
+            reservation_id = self.path[len('/reservations/'):-len('/cancel')].rstrip('/')
+            state_file = DATA / STATE_FILE
+            with RESERVATION_LOCK:
+                state = storage.load_state(state_file)
+                record = reservations.find_reservation(state, reservation_id)
+                if record is None:
+                    self.json_response(404, {'error': {'code': 'NOT_FOUND',
+                        'message': 'No reservation with ID %s' % reservation_id}})
+                    return
+                updated = reservations.cancel_reservation(state, reservation_id)
+                storage.save_state(state_file, updated)
+            self.json_response(200, reservations.find_reservation(updated, reservation_id))
+        elif self.path == '/reservations':
+            raw = self.rfile.read(int(self.headers.get('Content-Length', 0)))
+            try:
+                body = json.loads(raw)
+            except ValueError:
+                self.json_response(400, {'error': {'code': 'MALFORMED_JSON',
+                    'message': 'Request body must be valid JSON'}})
+                return
+            shape_error = reservations.body_shape_error(body)
+            if shape_error is not None:
+                self.json_response(400, shape_error)
+                return
+            if reservations.alias_is_blank(body['attendeeAlias']):
+                self.json_response(400, {'error': {'code': 'INVALID_ALIAS',
+                    'message': 'Attendee alias must not be blank'}})
+                return
+            state_file = DATA / STATE_FILE
+            with RESERVATION_LOCK:
+                state = storage.load_state(state_file)
+                error = reservations.request_error(state, body)
+                if error is not None:
+                    self.json_response(400, error)
+                    return
+                record = reservations.new_reservation(uuid.uuid4().hex, body['sessionId'],
+                                                      body['attendeeAlias'], body['requestKey'])
+                replay = reservations.find_replay(state, record)
+                if replay is not None:
+                    self.json_response(200, replay)
+                    return
+                if reservations.find_key_conflict(state, record) is not None:
+                    self.json_response(409, {'error': {'code': 'KEY_CONFLICT',
+                        'message': 'Request key %s was already used for another reservation'
+                                   % record['requestKey']}})
+                    return
+                try:
+                    updated = reservations.add_active_reservation(state, record)
+                except reservations.CapacityFull as error:
+                    self.json_response(409, {'error': {'code': 'CAPACITY_FULL',
+                        'message': str(error)}})
+                    return
+                storage.save_state(state_file, updated)
+            self.json_response(201, record)
+        else:
+            self.json_response(501, {'error': {'code': 'NOT_IMPLEMENTED',
+                'message': 'Implement reservation and cancellation in your team copy.'}})
 
 
 def main():
@@ -81,9 +181,9 @@ def main():
     parser.add_argument('--reset', action='store_true', help='Reset only the marked fixture DATA_DIR')
     args = parser.parse_args()
     if args.reset:
-        reset_fixture()
+        print('Reset fixture:', reset_fixture(DATA))
         return
-    if not (DATA / 'seats.db').exists():
+    if not (DATA / STATE_FILE).exists():
         parser.error('Run with --reset first, using the same DATA_DIR.')
     server = LoopbackHTTPServer(('127.0.0.1', int(os.environ.get('PORT', '8765'))), Handler)
     print('Scaffold only. Open http://127.0.0.1:%s' % server.server_port, flush=True)

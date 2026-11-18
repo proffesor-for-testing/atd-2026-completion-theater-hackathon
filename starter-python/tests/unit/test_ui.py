@@ -1,0 +1,74 @@
+"""Unit tests for ui.py: the pure function that renders the seat desk page.
+
+Input is session records in the API shape (api-contract.md), so the page can only
+show what the API reports. No server, no state file.
+"""
+import pytest
+
+import ui
+
+SEED_SESSIONS = [
+    {"id": "CT-101", "title": "Catching Ghost Databases", "capacity": 2,
+     "activeCount": 0, "remainingSeats": 2},
+    {"id": "CT-102", "title": "Tests That Can Fail", "capacity": 3,
+     "activeCount": 0, "remainingSeats": 3},
+]
+
+
+def test_rendered_page_shows_each_session_id_title_and_remaining_seats():
+    page = ui.render_page(SEED_SESSIONS)
+
+    for session in SEED_SESSIONS:
+        assert session["id"] in page
+        assert session["title"] in page
+        assert f"{session['remainingSeats']} remaining" in page
+
+
+@pytest.mark.parametrize("field", ["sessionId", "attendeeAlias", "requestKey"])
+def test_page_has_a_labelled_reservation_form_field(field):
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert f'name="{field}"' in page
+    assert f'for="{field}"' in page or f'id="{field}"' in page
+
+
+def test_reservation_form_posts_to_reservations():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert "<form" in page
+    assert "/reservations" in page
+
+
+def test_page_reloads_seat_counts_from_sessions_and_has_a_counts_container():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert 'id="seat-counts"' in page
+    assert "fetch('/sessions')" in page
+
+
+def test_page_has_a_cancel_control_per_reservation_posting_to_its_cancel_path():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert 'id="reservation-list"' in page
+    assert "/reservations/" in page
+    assert "/cancel" in page
+
+
+@pytest.mark.parametrize("marker", ['id="error-message"', 'role="alert"', 'id="dismiss-error"'])
+def test_page_has_a_visible_dismissable_error_region(marker):
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert marker in page
+
+
+def test_page_script_shows_the_api_error_message_when_an_action_fails():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert "error.message" in page
+    assert "!response.ok" in page
+
+
+def test_page_links_an_external_stylesheet_instead_of_bare_html():
+    page = ui.render_page(SEED_SESSIONS)
+
+    assert '<link rel="stylesheet" href="/static/style.css">' in page
