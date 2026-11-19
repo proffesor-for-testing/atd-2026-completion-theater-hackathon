@@ -1,0 +1,15 @@
+pr,suite,collected,passed,failed,skipped,exitCode,receipt
+4,primary native,43,43,0,0,0,core/pr-4/unit-command.json
+5,primary native,14,14,0,0,0,core/pr-5/unit-command.json
+6,primary native,10,10,0,0,0,core/pr-6/unit-command.json
+7,primary native,14,14,0,0,0,core/pr-7/unit-command.json
+8,primary native,18,18,0,0,0,core/pr-8/unit-command.json
+9,primary native,47,46,0,1,0,core/pr-9/unit-command.json
+10,primary native,30,30,0,0,0,core/pr-10/unit-command.json
+11,primary native,16,16,0,0,0,core/pr-11/unit-command.json
+12,primary native,67,67,0,0,0,core/pr-12/unit-command.json
+7,full provided Playwright,85,83,2,0,1,additional/pr-7/retry-1/additional-summary.json
+7,unchanged axe supplement at 120s,2,2,0,0,0,additional/pr-7/a11y-timeout-supplement/a11y-supplement.json
+9,documented coverage run,47,46,0,1,0,additional/pr-9/coverage-analysis-corrected.json documentedCommand
+9,retained-trace coverage run,47,46,0,1,0,additional/pr-9/coverage-analysis-corrected.json retainedTraceCommand
+9,unchanged binding supplement,1,1,0,0,0,additional/pr-9/loopback-binding-supplement/binding-supplement.json

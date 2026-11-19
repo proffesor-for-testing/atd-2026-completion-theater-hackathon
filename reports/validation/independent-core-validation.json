@@ -1,0 +1,417 @@
+{
+  "reviewedAt": "2026-11-18T23:01:37.277940+00:00",
+  "reviewer": "Codex independent core evidence reviewer (AI)",
+  "scope": "Nine core runtime packets plus populated-store integrity receipts; PR11 is rehearsal only. Browser and extra-technique runs are reviewed separately.",
+  "method": "Parsed raw HTTP/process/JSONL events, recomputed named API expectations, independently opened17retained stores per app read-only, checked all10x10batches, actual restart PIDs and unchanged mixed records, every populated invalid-case readback, exact raw native summaries, and recomputed mutant content hashes in memory from retained source plus exact diff.",
+  "participantCodeExecutedOnHost": false,
+  "sourceOrReportsModified": false,
+  "meaningOfValidation": "PASS validates these bounded core receipts, not whole-app acceptance, UI behavior, universal concurrency safety, human audit credit, or final event points. Whitespace-key counterexamples remain FAIL for9/11/12 and require the separately recorded rubric interpretation.",
+  "overallValidation": "PASS_WITH_METADATA_CAVEATS",
+  "results": [
+    {
+      "pr": 4,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "a2c26e8a525a436fdd16ac8cfbc74b64b2da33995b0aeb2926c61c03dc762df6",
+      "issues": [],
+      "notes": [],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [8400,8411],
+      "deepRestartPids": [8483,8491],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 43,
+        "passed": 43,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 7418
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "PASS",
+      "receipts": ["core/pr-4/shared-api/report.json","core/pr-4/shared-store-readback.json","core/pr-4/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-4/events.jsonl","core/pr-4/unit-command.json","core/pr-4/negative-control.diff"]
+    },
+    {
+      "pr": 5,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "89258831a07927876bff6337634e6f9c3f906dca9fd0102e3aac2146f9c2227a",
+      "issues": [],
+      "notes": ["executedTestCount absent; validated unittestCount and raw summary instead."],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [6818,6828],
+      "deepRestartPids": [6887,6894],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 14,
+        "passed": 14,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 6160
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "PASS",
+      "receipts": ["core/pr-5/shared-api/report.json","core/pr-5/shared-store-readback.json","core/pr-5/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-5/events.jsonl","core/pr-5/unit-command.json","core/pr-5/negative-control.diff"]
+    },
+    {
+      "pr": 6,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "6e60ffc98f525434d7a8e959fab9f18c9ff106611d2f8dec8f9e72f5bbbffa79",
+      "issues": [],
+      "notes": [],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [9179,9191],
+      "deepRestartPids": [9267,9274],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 10,
+        "passed": 10,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 8600
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "PASS",
+      "receipts": ["core/pr-6/shared-api/report.json","core/pr-6/shared-store-readback.json","core/pr-6/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-6/events.jsonl","core/pr-6/unit-command.json","core/pr-6/negative-control.diff"]
+    },
+    {
+      "pr": 7,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "b5a92ebbad9b83d7b57512072e4b840786679accc65d5b50990c99c16b7aae08",
+      "issues": [],
+      "notes": [],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [9769,9780],
+      "deepRestartPids": [9855,9862],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 14,
+        "passed": 14,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 9394
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "PASS",
+      "receipts": ["core/pr-7/shared-api/report.json","core/pr-7/shared-store-readback.json","core/pr-7/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-7/events.jsonl","core/pr-7/unit-command.json","core/pr-7/negative-control.diff"]
+    },
+    {
+      "pr": 8,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "fe0142c21f84ff72cc34bf09197e0d8baefa3fe8e2ae47610a30f8c18d815d9e",
+      "issues": [],
+      "notes": [],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [10759,10770],
+      "deepRestartPids": [10900,10907],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 18,
+        "passed": 18,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 9951
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "PASS",
+      "receipts": ["core/pr-8/shared-api/report.json","core/pr-8/shared-store-readback.json","core/pr-8/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-8/events.jsonl","core/pr-8/unit-command.json","core/pr-8/negative-control.diff"]
+    },
+    {
+      "pr": 9,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "ff67447ce929ceba8ad02d43ae662e5741cef2cfce8184758d20529cc18fceed",
+      "issues": [],
+      "notes": ["executedTestCount includes skipped tests; raw reported total and actual passed/skipped counts are recorded separately.","The skipped non-loopback-bind probe reports no non-loopback interface: NOT RUN, as expected in the guest network namespace."],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [13148,13163],
+      "deepRestartPids": [13271,13287],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 47,
+        "passed": 46,
+        "skipped": 1,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 11197
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "FAIL",
+      "receipts": ["core/pr-9/shared-api/report.json","core/pr-9/shared-store-readback.json","core/pr-9/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-9/events.jsonl","core/pr-9/unit-command.json","core/pr-9/negative-control.diff"]
+    },
+    {
+      "pr": 10,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "3446b8d65937a2a958a00085bee6a49b3443fa27189b5f8d0d96b0ad3d915288",
+      "issues": [],
+      "notes": [],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [14626,14636],
+      "deepRestartPids": [14700,14708],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 30,
+        "passed": 30,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 13535
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "PASS",
+      "receipts": ["core/pr-10/shared-api/report.json","core/pr-10/shared-store-readback.json","core/pr-10/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-10/events.jsonl","core/pr-10/unit-command.json","core/pr-10/negative-control.diff"]
+    },
+    {
+      "pr": 11,
+      "scope": "rehearsal only",
+      "validationStatus": "PASS",
+      "sourceId": "2717dc28358ece7371574920d1050ee183f099d2d5ab2e2e06ef82d377172f3c",
+      "issues": [],
+      "notes": [],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [15329,15340],
+      "deepRestartPids": [15427,15434],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "unittest",
+        "reportedTotal": 16,
+        "passed": 16,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 14831
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "FAIL",
+      "receipts": ["core/pr-11/shared-api/report.json","core/pr-11/shared-store-readback.json","core/pr-11/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-11/events.jsonl","core/pr-11/unit-command.json","core/pr-11/negative-control.diff"]
+    },
+    {
+      "pr": 12,
+      "scope": "individual participant",
+      "validationStatus": "PASS",
+      "sourceId": "8bcea4aa69b7561f28ab2a48c82a17d568892088b9a1d9642958e72f9e6c3ca9",
+      "issues": [],
+      "notes": ["67 tests passed; the read-only-source pytest cache warning is disclosed and is neither a skip nor an app failure."],
+      "sourceHashesAndRetainedSourceVerified": true,
+      "namedAC02to08API": "PASS; UI remains separate",
+      "sharedConcurrency": {
+        "batches": 10,
+        "attemptsPerBatch": 10,
+        "wins": 10,
+        "rejections": 90,
+        "everyBatchExactlyOneWinnerAndTwoActiveStoredRows": true
+      },
+      "retainedSharedStoresIndependentlyRead": 17,
+      "sharedRestartPids": [16391,16404],
+      "deepRestartPids": [16465,16473],
+      "mixedRecordsEqualBeforeWhileStoppedAndAfter": true,
+      "fivePopulatedInvalidCases": {
+        "rejections": 5,
+        "sameCompleteStoredRowsAfterEach": true,
+        "healthyGetAndCountsAfterEach": true
+      },
+      "nativeTests": {
+        "runner": "pytest",
+        "reportedTotal": 67,
+        "passed": 67,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0,
+        "exitCode": 0,
+        "timedOut": false,
+        "commandPid": 15648
+      },
+      "negativeControl": {
+        "exits": [0,1,0],
+        "behavioralAssertionFailureVerified": true,
+        "mutantHashIndependentlyRecomputedFromDiff": true,
+        "restoredHashMatchesBaseline": true
+      },
+      "knownExtraWhitespaceKeyResult": "FAIL",
+      "receipts": ["core/pr-12/shared-api/report.json","core/pr-12/shared-store-readback.json","core/pr-12/deep-api-sql/events.jsonl","integrity/integrity-evidence/pr-12/events.jsonl","core/pr-12/unit-command.json","core/pr-12/negative-control.diff"]
+    }
+  ]
+}
