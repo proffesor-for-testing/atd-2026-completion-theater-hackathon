@@ -1,0 +1,379 @@
+{
+  "reviewedAt": "2026-11-18T22:48:55.948941+00:00",
+  "reviewer": "Codex independent rubric interpretation reviewer (AI)",
+  "participantCodeExecutedOnHost": false,
+  "filesModified": [
+    "executed-v4/rubric-interpretation.json"
+  ],
+  "question": "How should a fresh observed rejection of requestKey equal to three literal spaces affect the existing binary rubric when canonical Ada/K1 creation and readback pass?",
+  "factualConclusion": "PR9, PR11 and PR12 return HTTP400 INVALID_REQUEST_KEY for an otherwise valid fresh CT-101/Ada reservation whose requestKey is a three-character string. Six other retained apps accept and preserve that identical literal key. The mismatch is an executed observation, not a static suspicion or wrapper verdict.",
+  "inputContractInterpretation": {
+    "preferred": "Under the literal published PRD, a three-space key is non-empty and must not be silently reclassified as an empty/blank alias. The PRD explicitly requires aliases to be nonblank but only requires keys to be nonempty. No published rule says to trim keys or require a visible character.",
+    "confidence": "High for literal field semantics; moderate for mapping this counterexample to a binary score row because AC-03 names the specific K1 example.",
+    "notAUniversalProof": "Six accepting comparators support consistency of this probe, not the authority or correctness of the oracle. The published PRD supplies the oracle."
+  },
+  "strictRecommendation": {
+    "row": "A3 / AC-03",
+    "proposedPoints": 0,
+    "proposedStatus": "FAIL",
+    "evidenceClass": "EXECUTED",
+    "humanAdjudicationRequired": true,
+    "rationale": "A3 is the existing creation criterion: Valid reservation and independent record readback. The general field contract defines a nonempty key as valid; a reproducible otherwise-valid create counterexample prevents a broad whole-criterion PASS. No additional criterion or extra penalty is introduced.",
+    "requiredRowWording": "Canonical CT-101/Ada/K1 create, stable-ID readback and UI contribution PASS. A fresh create using valid literal nonempty requestKey=\"   \" returns400 INVALID_REQUEST_KEY; strict valid-input conformance therefore FAIL. Binary row mapping is disputed and awaits a named human ruling.",
+    "affectedEventRecommendations": [
+      9,
+      12
+    ],
+    "affectedRehearsalOnly": [
+      11
+    ],
+    "singleRowEffect": "At most one existing5-point row is held for this same key-validation cause. Do not apply an extra numeric deduction after row sums.",
+    "unrelatedRows": "Keep A5 and A8 on their own executed oracles. A5 tests replay/conflict behavior; A8 enumerates five invalid cases, which do not include a nonempty whitespace key. Do not fail evidence/creativity rows merely because this functional counterexample exists."
+  },
+  "alternativeInterpretation": {
+    "name": "Named observable acceptance scenario governs score; general-contract gap recorded separately",
+    "rationale": "PRD AC-03 explicitly specifies CT-101/Ada/K1. That exact example passes in raw201/GET200/store receipts; the published API examples also show K1 and do not explicitly add a whitespace-key acceptance case. A human may reasonably treat the eight scored scenarios as the announced bounded scoring contract.",
+    "row": "A3 / AC-03",
+    "proposedPointsIfAllOtherA3RequirementsAreSatisfied": 5,
+    "proposedStatusIfAllOtherA3RequirementsAreSatisfied": "PASS",
+    "defectHandling": "Retain the executed contract mismatch and limitation prominently, without inventing a ninth row, deducting arbitrary points, or mislabelling the extra case PASS.",
+    "scope": "This alternative is a scoring-scope interpretation. It does not claim that three spaces form an empty string or that the HTTP400 observation did not happen."
+  },
+  "fairnessAndAuthority": {
+    "assessment": "The strict A3 mapping is defensible but is not uniquely compelled by the exact K1 acceptance sentence. Do not present the AI interpretation as an already-published explicit whitespace-key scoring rule.",
+    "action": "Present strict and alternative outcomes for a named human to resolve uniformly for every submission and the separately labelled rehearsal. Rubric line73 says a disputed rule applies to everyone or is left unscored.",
+    "earlierReport": "Earlier provisional treatment as an additional static contract gap does not bind future recommendations, but fresh execution alone does not change the rubric boundaries. Explain the revised recommendation as a confirmed valid-input counterexample plus an explicit broad A3 interpretation, not as an automatic consequence of running more tests.",
+    "eventState": "No final event points, human identities, waivers or adjudication are entered by this file. PR11 remains rehearsal only; category C remains deferred as directed by the user."
+  },
+  "ruleReferences": [
+    {
+      "file": "/workspaces/public-repo/docs/01-Starter-PRD.md",
+      "lines": [
+        24
+      ],
+      "supports": "Input domain distinguishes blank/whitespace-only aliases from a non-empty request-key string."
+    },
+    {
+      "file": "/workspaces/public-repo/docs/01-Starter-PRD.md",
+      "lines": [
+        28,
+        34
+      ],
+      "supports": "Binary criterion requires observed execution; AC03 gives the canonical CT-101/Ada/K1 successful create, readback, remaining1 and UI scenario."
+    },
+    {
+      "file": "/workspaces/public-repo/docs/01-Starter-PRD.md",
+      "lines": [
+        36,
+        39
+      ],
+      "supports": "AC05 is replay/key-conflict behavior. AC08 expressly lists five invalid cases; whitespace-only requestKey is not one of them."
+    },
+    {
+      "file": "/workspaces/public-repo/docs/api-contract.md",
+      "lines": [
+        24,
+        29,
+        32,
+        38
+      ],
+      "supports": "Reservation endpoint, illustrative K1 request, 2xx successful record and independent GET/readback. Examples do not impose key trimming."
+    },
+    {
+      "file": "/workspaces/public-repo/docs/04-Scoring-Sheets.md",
+      "lines": [
+        7,
+        15,
+        17,
+        20
+      ],
+      "supports": "0/5 binary rows; A3 is valid reservation/readback, A5 replay/conflicts, A8 five invalid-input cases."
+    },
+    {
+      "file": "/workspaces/public-repo/docs/04-Scoring-Sheets.md",
+      "lines": [
+        5,
+        73,
+        75
+      ],
+      "supports": "Equal recorded rule changes, disputed rules applied uniformly or left unscored, and preservation of unrelated earned points."
+    },
+    {
+      "file": "/workspaces/public-repo/.agents/skills/score-hackathon/SKILL.md",
+      "lines": [
+        36,
+        42,
+        44
+      ],
+      "supports": "Evidence independent from working-app points; recommendations remain provisional until named human decisions; no invented identities or final award."
+    }
+  ],
+  "verifiedCounterexamples": [
+    {
+      "pr": 9,
+      "scope": "Individual participant event-assistance recommendation; human decisions pending",
+      "sourceId": "ff67447ce929ceba8ad02d43ae662e5741cef2cfce8184758d20529cc18fceed",
+      "sourceUnchanged": true,
+      "receipt": "core/pr-9/deep-api-sql/events.jsonl",
+      "receiptSha256": "e9e9f0648e9731499977a776e34517d486c379a4cbb6ba0614ae173975ef7076",
+      "probe": {
+        "scenario": "EXTRA-nonempty-whitespace-key",
+        "startLine": 300,
+        "pid": 13414,
+        "stopLine": 311,
+        "stopPid": 13414,
+        "stopExitCode": -15,
+        "freshStateLine": 306,
+        "freshStateReservationCount": 0,
+        "freshCounts": {
+          "CT-101": [
+            2,
+            0,
+            2
+          ],
+          "CT-102": [
+            3,
+            0,
+            3
+          ]
+        },
+        "postLine": 308,
+        "at": "2026-11-18T22:17:19.390839+00:00",
+        "request": {
+          "sessionId": "CT-101",
+          "attendeeAlias": "Ada",
+          "requestKey": "   "
+        },
+        "keyLength": 3,
+        "keyCodePoints": [
+          32,
+          32,
+          32
+        ],
+        "httpStatus": 400,
+        "response": {
+          "error": {
+            "code": "INVALID_REQUEST_KEY",
+            "message": "requestKey must be a non-empty string"
+          }
+        }
+      },
+      "canonicalReservation": {
+        "scenario": "AC03",
+        "postLine": 23,
+        "httpStatus": 201,
+        "recordId": "ef2d6848c43a42419b08d5b6d8ba4aae",
+        "getLine": 27,
+        "readbackStatus": 200,
+        "sameRecord": true,
+        "pid": 13201,
+        "stopPid": 13201
+      },
+      "independentRestartEvidence": {
+        "scenario": "AC07",
+        "pids": [
+          13271,
+          13287
+        ],
+        "sameStateDirectory": true,
+        "mixedActiveAndCancelledStoredRowsEqualBeforeStoppedAndAfter": true,
+        "uiNotAssessedByThisInterpretationReview": true
+      },
+      "receiptLimit": "The extra probe aborts after the unexpected400, so its receipts do not show a post-rejection store readback or health GET. Neither is necessary to establish this valid-create rejection. Other AC receipts remain separate."
+    },
+    {
+      "pr": 11,
+      "scope": "AI rehearsal only; exclude from event participant ranking",
+      "sourceId": "2717dc28358ece7371574920d1050ee183f099d2d5ab2e2e06ef82d377172f3c",
+      "sourceUnchanged": true,
+      "receipt": "core/pr-11/deep-api-sql/events.jsonl",
+      "receiptSha256": "477d86faded27937f0c08fe93d4ca02fa3bf7f4080a87f670f28cad41fc2cf8c",
+      "probe": {
+        "scenario": "EXTRA-nonempty-whitespace-key",
+        "startLine": 300,
+        "pid": 15534,
+        "stopLine": 311,
+        "stopPid": 15534,
+        "stopExitCode": -15,
+        "freshStateLine": 306,
+        "freshStateReservationCount": 0,
+        "freshCounts": {
+          "CT-101": [
+            2,
+            0,
+            2
+          ],
+          "CT-102": [
+            3,
+            0,
+            3
+          ]
+        },
+        "postLine": 308,
+        "at": "2026-11-18T22:22:37.823745+00:00",
+        "request": {
+          "sessionId": "CT-101",
+          "attendeeAlias": "Ada",
+          "requestKey": "   "
+        },
+        "keyLength": 3,
+        "keyCodePoints": [
+          32,
+          32,
+          32
+        ],
+        "httpStatus": 400,
+        "response": {
+          "error": {
+            "code": "INVALID_REQUEST_KEY",
+            "message": "requestKey must be a non-empty, non-whitespace string."
+          }
+        }
+      },
+      "canonicalReservation": {
+        "scenario": "AC03",
+        "postLine": 23,
+        "httpStatus": 201,
+        "recordId": "4046c11f7a17484396f37bd81e8db2ce",
+        "getLine": 27,
+        "readbackStatus": 200,
+        "sameRecord": true,
+        "pid": 15373,
+        "stopPid": 15373
+      },
+      "independentRestartEvidence": {
+        "scenario": "AC07",
+        "pids": [
+          15427,
+          15434
+        ],
+        "sameStateDirectory": true,
+        "mixedActiveAndCancelledStoredRowsEqualBeforeStoppedAndAfter": true,
+        "uiNotAssessedByThisInterpretationReview": true
+      },
+      "receiptLimit": "The extra probe aborts after the unexpected400, so its receipts do not show a post-rejection store readback or health GET. Neither is necessary to establish this valid-create rejection. Other AC receipts remain separate."
+    },
+    {
+      "pr": 12,
+      "scope": "Individual participant event-assistance recommendation; human decisions pending",
+      "sourceId": "8bcea4aa69b7561f28ab2a48c82a17d568892088b9a1d9642958e72f9e6c3ca9",
+      "sourceUnchanged": true,
+      "receipt": "core/pr-12/deep-api-sql/events.jsonl",
+      "receiptSha256": "557e098c36c4d404898f845d5c4fc2d8272b5fd136ae7eca4badabf813389f50",
+      "probe": {
+        "scenario": "EXTRA-nonempty-whitespace-key",
+        "startLine": 300,
+        "pid": 16548,
+        "stopLine": 311,
+        "stopPid": 16548,
+        "stopExitCode": -15,
+        "freshStateLine": 306,
+        "freshStateReservationCount": 0,
+        "freshCounts": {
+          "CT-101": [
+            2,
+            0,
+            2
+          ],
+          "CT-102": [
+            3,
+            0,
+            3
+          ]
+        },
+        "postLine": 308,
+        "at": "2026-11-18T22:24:36.181573+00:00",
+        "request": {
+          "sessionId": "CT-101",
+          "attendeeAlias": "Ada",
+          "requestKey": "   "
+        },
+        "keyLength": 3,
+        "keyCodePoints": [
+          32,
+          32,
+          32
+        ],
+        "httpStatus": 400,
+        "response": {
+          "error": {
+            "code": "INVALID_REQUEST_KEY",
+            "message": "Request key must be a non-empty string"
+          }
+        }
+      },
+      "canonicalReservation": {
+        "scenario": "AC03",
+        "postLine": 23,
+        "httpStatus": 201,
+        "recordId": "b7f9eb780a754cd8857ce5b332eb789a",
+        "getLine": 27,
+        "readbackStatus": 200,
+        "sameRecord": true,
+        "pid": 16430,
+        "stopPid": 16430
+      },
+      "independentRestartEvidence": {
+        "scenario": "AC07",
+        "pids": [
+          16465,
+          16473
+        ],
+        "sameStateDirectory": true,
+        "mixedActiveAndCancelledStoredRowsEqualBeforeStoppedAndAfter": true,
+        "uiNotAssessedByThisInterpretationReview": true
+      },
+      "receiptLimit": "The extra probe aborts after the unexpected400, so its receipts do not show a post-rejection store readback or health GET. Neither is necessary to establish this valid-create rejection. Other AC receipts remain separate."
+    }
+  ],
+  "verifiedAcceptingComparators": [
+    {
+      "pr": 4,
+      "sourceId": "a2c26e8a525a436fdd16ac8cfbc74b64b2da33995b0aeb2926c61c03dc762df6",
+      "receipt": "core/pr-4/deep-api-sql/events.jsonl",
+      "line": 308,
+      "httpStatus": 201,
+      "literalThreeSpaceKeyRetained": true
+    },
+    {
+      "pr": 5,
+      "sourceId": "89258831a07927876bff6337634e6f9c3f906dca9fd0102e3aac2146f9c2227a",
+      "receipt": "core/pr-5/deep-api-sql/events.jsonl",
+      "line": 308,
+      "httpStatus": 201,
+      "literalThreeSpaceKeyRetained": true
+    },
+    {
+      "pr": 6,
+      "sourceId": "6e60ffc98f525434d7a8e959fab9f18c9ff106611d2f8dec8f9e72f5bbbffa79",
+      "receipt": "core/pr-6/deep-api-sql/events.jsonl",
+      "line": 308,
+      "httpStatus": 201,
+      "literalThreeSpaceKeyRetained": true
+    },
+    {
+      "pr": 7,
+      "sourceId": "b5a92ebbad9b83d7b57512072e4b840786679accc65d5b50990c99c16b7aae08",
+      "receipt": "core/pr-7/deep-api-sql/events.jsonl",
+      "line": 308,
+      "httpStatus": 201,
+      "literalThreeSpaceKeyRetained": true
+    },
+    {
+      "pr": 8,
+      "sourceId": "fe0142c21f84ff72cc34bf09197e0d8baefa3fe8e2ae47610a30f8c18d815d9e",
+      "receipt": "core/pr-8/deep-api-sql/events.jsonl",
+      "line": 308,
+      "httpStatus": 201,
+      "literalThreeSpaceKeyRetained": true
+    },
+    {
+      "pr": 10,
+      "sourceId": "3446b8d65937a2a958a00085bee6a49b3443fa27189b5f8d0d96b0ad3d915288",
+      "receipt": "core/pr-10/deep-api-sql/events.jsonl",
+      "line": 308,
+      "httpStatus": 201,
+      "literalThreeSpaceKeyRetained": true
+    }
+  ]
+}
